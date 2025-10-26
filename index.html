@@ -4,479 +4,1121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestione Abbonamenti Scuola di Ballo</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#9333ea">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Minimal CSS to approximate the Tailwind look used in the original file */
-        :root{
-            --purple-600:#6b21a8;
-            --purple-500:#7c3aed;
-            --pink-600:#be185d;
-            --bg1:linear-gradient(135deg,#f5f3ff,#fdf2f8);
-            --card:#ffffff;
+        body {
+            box-sizing: border-box;
         }
-        *{box-sizing:border-box}
-        body{font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:var(--bg1); color:#111827; min-height:100vh;}
-        .container{max-width:1100px;margin:0 auto;padding:2rem;}
-        header{text-align:center;margin-bottom:2rem;}
-        h1{font-size:2rem;margin:0 0 .5rem;}
-        .card{background:var(--card);border-radius:12px;padding:1.25rem;box-shadow:0 6px 18px rgba(15,23,42,0.06);margin-bottom:1.5rem;}
-        input,select,button{font-size:1rem}
-        input[type="text"], input[type="date"], input[type="number"], select{
-            width:100%;padding:.6rem;border:1px solid #d1d5db;border-radius:8px;
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            input[type="date"] {
+                font-size: 16px; /* Prevents zoom on iOS */
+                -webkit-appearance: none;
+            }
+            
+            .subscription-card {
+                padding: 1rem;
+            }
         }
-        button.primary{background:linear-gradient(90deg,var(--purple-500),var(--pink-600));color:white;padding:.8rem 1rem;border-radius:10px;border:none;width:100%}
-        .grid{display:grid;gap:1rem}
-        .grid.cols-2{grid-template-columns:repeat(2,1fr)}
-        .flex{display:flex;gap:.5rem;align-items:center}
-        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1rem}
-        .stat{padding:1rem;border-radius:10px;color:white}
-        .stat.blue{background:linear-gradient(90deg,#3b82f6,#2563eb)}
-        .stat.em{background:linear-gradient(90deg,#10b981,#059669)}
-        .status-active{background:linear-gradient(135deg,#10b981,#059669);color:white;padding:.25rem .6rem;border-radius:999px}
-        .status-expiring{background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:.25rem .6rem;border-radius:999px}
-        .status-expired{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:.25rem .6rem;border-radius:999px}
-        .subscription-card{background:var(--card);border-radius:12px;padding:1rem;box-shadow:0 4px 10px rgba(2,6,23,0.04)}
-        .hidden{display:none}
-        @media(max-width:800px){
-            .stats-grid{grid-template-columns:repeat(2,1fr)}
-            .grid.cols-2{grid-template-columns:1fr}
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-active { background: linear-gradient(135deg, #10b981, #059669); }
+        .status-expiring { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .status-expired { background: linear-gradient(135deg, #ef4444, #dc2626); }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Gestione Abbonamenti</h1>
+<body class="min-h-full bg-gradient-to-br from-purple-50 to-pink-50">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Gestione Abbonamenti</h1>
         </header>
 
-        <!-- Form -->
-        <div class="card">
-            <h2 style="font-size:1.25rem;margin-bottom:.75rem">Nuovo Abbonamento</h2>
-            <form id="subscriptionForm" class="grid cols-2">
-                <div>
-                    <label for="studentName" style="display:block;font-size:.9rem;margin-bottom:.3rem">Nome Allievo</label>
-                    <input type="text" id="studentName" required>
+        <!-- Form per nuovo abbonamento -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Nuovo Abbonamento</h2>
+            
+            <form id="subscriptionForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="studentName" class="block text-sm font-medium text-gray-700 mb-2">Nome Allievo</label>
+                        <input type="text" id="studentName" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="subscriptionType" class="block text-sm font-medium text-gray-700 mb-2">Tipo Abbonamento</label>
+                        <select id="subscriptionType" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Seleziona tipo</option>
+                            <option value="monthly">Mensile</option>
+                            <option value="bimonthly">Bimestrale (6 lezioni)</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label for="subscriptionType" style="display:block;font-size:.9rem;margin-bottom:.3rem">Tipo Abbonamento</label>
-                    <select id="subscriptionType" required>
-                        <option value="">Seleziona tipo</option>
-                        <option value="monthly">Mensile</option>
-                        <option value="bimonthly">Bimestrale (6 lezioni)</option>
-                    </select>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">Data Inizio</label>
+                        <input type="date" id="startDate" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base">
+                    </div>
+                    
+                    <div id="priceContainer">
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Prezzo (€)</label>
+                        <input type="number" id="price" step="0.01" min="0" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base">
+                    </div>
                 </div>
-                <div>
-                    <label for="startDate" style="display:block;font-size:.9rem;margin-bottom:.3rem">Data Inizio</label>
-                    <input type="date" id="startDate" required>
-                </div>
-                <div id="priceContainer">
-                    <label for="price" style="display:block;font-size:.9rem;margin-bottom:.3rem">Prezzo (€)</label>
-                    <input type="number" id="price" step="0.01" min="0" required>
-                </div>
-                <div style="grid-column:1/-1">
-                    <button type="submit" class="primary">Aggiungi Abbonamento</button>
-                </div>
+
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105">
+                    Aggiungi Abbonamento
+                </button>
             </form>
         </div>
 
-        <!-- List & stats -->
-        <div class="card">
-            <div style="margin-bottom:.8rem">
-                <h2 style="font-size:1.1rem;margin:0 0 .5rem">Lista Abbonamenti</h2>
-                <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem">
-                    <button onclick="exportToCSV()" style="padding:.4rem .6rem;border-radius:8px;background:#d1fae5;border:none">Scarica CSV</button>
-                    <button onclick="document.getElementById('importFile').click()" style="padding:.4rem .6rem;border-radius:8px;background:#dbEAFE;border:none">Importa CSV</button>
-                    <button onclick="exportToGoogleSheets()" style="padding:.4rem .6rem;border-radius:8px;background:#f3e8ff;border:none">Google Sheets</button>
-                    <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importFromCSV(event)">
+        <!-- Filtri e statistiche -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Lista Abbonamenti</h2>
+                
+                <!-- Pulsanti Export/Import -->
+                <div class="flex flex-wrap gap-2 mb-4 justify-center sm:justify-start">
+                    <button onclick="exportToCSV()" 
+                            class="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm min-w-0">
+                        📊 Scarica CSV
+                    </button>
+                    <button onclick="document.getElementById('importFile').click()" 
+                            class="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm min-w-0">
+                        📁 Importa CSV
+                    </button>
+                    <button onclick="exportToGoogleSheets()" 
+                            class="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors text-sm min-w-0">
+                        📋 Google Sheets
+                    </button>
+                    <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
                 </div>
-
-                <div style="margin-bottom:.6rem">
-                    <button onclick="filterSubscriptions('all')" class="filter-btn" style="padding:.4rem .6rem;border-radius:8px;background:#e5e7eb;border:none">Tutti (<span id="count-all">0</span>)</button>
-                    <button onclick="filterSubscriptions('active')" style="padding:.4rem .6rem;border-radius:8px;background:#bbf7d0;border:none">Attivi (<span id="count-active">0</span>)</button>
-                    <button onclick="filterSubscriptions('expiring')" style="padding:.4rem .6rem;border-radius:8px;background:#fef3c7;border:none">In Scadenza (<span id="count-expiring">0</span>)</button>
-                    <button onclick="filterSubscriptions('expired')" style="padding:.4rem .6rem;border-radius:8px;background:#fee2e2;border:none">Scaduti (<span id="count-expired">0</span>)</button>
+                
+                <!-- Filtri per Stato -->
+                <div class="mb-3">
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Filtri per Stato</h3>
+                    <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                        <button onclick="filterSubscriptions('all')" 
+                                class="filter-btn px-3 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors active text-sm">
+                            Tutti (<span id="count-all">0</span>)
+                        </button>
+                        <button onclick="filterSubscriptions('active')" 
+                                class="filter-btn px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm">
+                            Attivi (<span id="count-active">0</span>)
+                        </button>
+                        <button onclick="filterSubscriptions('expiring')" 
+                                class="filter-btn px-3 py-2 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors text-sm">
+                            In Scadenza (<span id="count-expiring">0</span>)
+                        </button>
+                        <button onclick="filterSubscriptions('expired')" 
+                                class="filter-btn px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-sm">
+                            Scaduti (<span id="count-expired">0</span>)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtri per Tipo -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Filtri per Tipo</h3>
+                    <div class="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+                        <button onclick="filterSubscriptions('monthly-active')" 
+                                class="filter-btn px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm">
+                            Mensili Attivi (<span id="count-monthly-active">0</span>)
+                        </button>
+                        <button onclick="filterSubscriptions('bimonthly-active')" 
+                                class="filter-btn px-3 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors text-sm">
+                            Bimestrali Attivi (<span id="count-bimonthly-active">0</span>)
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="stats-grid" style="margin-bottom:1rem">
-                <div class="stat blue">
-                    <div id="totalRevenue">€0.00</div>
-                    <div style="font-size:.85rem;opacity:.9">Ricavi Totali</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all" onclick="toggleRevenueDetails()">
+                    <div class="text-2xl font-bold" id="totalRevenue">€0.00</div>
+                    <div class="text-blue-100">Ricavi Totali</div>
+                    <div class="text-xs text-blue-200 mt-1">Clicca per dettagli</div>
                 </div>
-                <div class="stat em">
-                    <div id="monthlyRevenue">€0.00</div>
-                    <div style="font-size:.85rem;opacity:.9">Ricavi Questo Mese</div>
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-lg">
+                    <div class="text-2xl font-bold" id="monthlyRevenue">€0.00</div>
+                    <div class="text-emerald-100">Ricavi Questo Mese</div>
                 </div>
-                <div class="stat" style="background:linear-gradient(90deg,#10b981,#059669)">
-                    <div id="activeCount">0</div>
-                    <div style="font-size:.85rem;opacity:.9">Abbonamenti Attivi</div>
+                <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+                    <div class="text-2xl font-bold" id="activeCount">0</div>
+                    <div class="text-green-100">Abbonamenti Attivi</div>
                 </div>
-                <div class="stat" style="background:linear-gradient(90deg,#7c3aed,#6d28d9)">
-                    <div id="totalLessons">0</div>
-                    <div style="font-size:.85rem;opacity:.9">Lezioni Rimanenti</div>
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg cursor-pointer hover:from-purple-600 hover:to-purple-700 transition-all" onclick="toggleLessonsDetails()">
+                    <div class="text-2xl font-bold" id="totalLessons">0</div>
+                    <div class="text-purple-100">Lezioni Rimanenti</div>
+                    <div class="text-xs text-purple-200 mt-1">Clicca per dettagli</div>
                 </div>
             </div>
 
-            <div id="subscriptionsList"></div>
-            <div id="emptyMessage" class="card" style="text-align:center">
-                <h3 style="margin:0 .0 .3rem">Nessun abbonamento ancora</h3>
-                <p style="margin:0;color:#6b7280">Aggiungi il primo abbonamento per iniziare!</p>
+            <!-- Dettagli ricavi (nascosto di default) -->
+            <div id="revenueDetails" class="bg-gray-50 rounded-lg p-6 mb-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Dettaglio Ricavi</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="text-lg font-bold text-blue-600" id="monthlyTotal">€0.00</div>
+                        <div class="text-sm text-gray-600">Abbonamenti Mensili</div>
+                        <div class="text-xs text-gray-500" id="monthlyCount">0 abbonamenti</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="text-lg font-bold text-purple-600" id="bimonthlyTotal">€0.00</div>
+                        <div class="text-sm text-gray-600">Abbonamenti Bimestrali</div>
+                        <div class="text-xs text-gray-500" id="bimonthlyCount">0 abbonamenti</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="text-lg font-bold text-green-600" id="averageRevenue">€0.00</div>
+                        <div class="text-sm text-gray-600">Ricavo Medio</div>
+                        <div class="text-xs text-gray-500">per abbonamento</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <h4 class="font-semibold text-gray-700 mb-3">Ricavi per Mese</h4>
+                    <div id="monthlyBreakdown" class="space-y-2">
+                        <!-- I ricavi mensili verranno inseriti qui -->
+                    </div>
+                </div>
             </div>
+
+            <!-- Dettagli lezioni (nascosto di default) -->
+            <div id="lessonsDetails" class="bg-gray-50 rounded-lg p-6 mb-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🎯 Dettaglio Lezioni</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="text-lg font-bold text-purple-600" id="activeBimonthlyCount">0</div>
+                        <div class="text-sm text-gray-600">Abbonamenti Bimestrali Attivi</div>
+                        <div class="text-xs text-gray-500">con lezioni rimanenti (6 per abbonamento)</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="text-lg font-bold text-green-600" id="totalRemainingLessons">0</div>
+                        <div class="text-sm text-gray-600">Lezioni Totali Rimanenti</div>
+                        <div class="text-xs text-gray-500">solo abbonamenti attivi</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="text-lg font-bold text-blue-600" id="averageLessonsPerStudent">0</div>
+                        <div class="text-sm text-gray-600">Media Lezioni</div>
+                        <div class="text-xs text-gray-500">per allievo attivo</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <h4 class="font-semibold text-gray-700 mb-3">Lezioni per Allievo (Solo Bimestrali Attivi - 6 lezioni per abbonamento)</h4>
+                    <div id="studentLessonsBreakdown" class="space-y-2">
+                        <!-- Le lezioni per allievo verranno inserite qui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista abbonamenti -->
+        <div id="subscriptionsList" class="space-y-4">
+            <!-- Gli abbonamenti verranno inseriti qui dinamicamente -->
+        </div>
+
+        <!-- Messaggio quando la lista è vuota -->
+        <div id="emptyMessage" class="text-center py-12 bg-white rounded-xl shadow-lg">
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun abbonamento ancora</h3>
+            <p class="text-gray-500">Aggiungi il primo abbonamento per iniziare!</p>
         </div>
     </div>
 
-<script>
-/* --- Application JS (same logic as original, adjusted for filenames) --- */
-// Carica i dati con sistema di recupero robusto
-let subscriptions = loadSubscriptions();
-let currentFilter = 'all';
+    <script>
+        // Carica i dati con sistema di recupero robusto
+        let subscriptions = loadSubscriptions();
+        let currentFilter = 'all';
 
-function loadSubscriptions() {
-    try {
-        const mainData = localStorage.getItem('danceSubscriptions');
-        if (mainData) {
-            const parsed = JSON.parse(mainData);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                console.log(`Caricati ${parsed.length} abbonamenti dal localStorage`);
-                return parsed;
+        function loadSubscriptions() {
+            try {
+                // Prova a caricare i dati principali
+                const mainData = localStorage.getItem('danceSubscriptions');
+                if (mainData) {
+                    const parsed = JSON.parse(mainData);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        console.log(`✅ Caricati ${parsed.length} abbonamenti dal localStorage`);
+                        return parsed;
+                    }
+                }
+
+                // Se i dati principali non ci sono, prova il backup
+                const backupData = localStorage.getItem('danceSubscriptions_backup');
+                if (backupData) {
+                    const backup = JSON.parse(backupData);
+                    if (backup.subscriptions && Array.isArray(backup.subscriptions)) {
+                        console.log(`🔄 Recuperati ${backup.subscriptions.length} abbonamenti dal backup`);
+                        showNotification('📦 Dati recuperati dal backup automatico', 'success');
+                        return backup.subscriptions;
+                    }
+                }
+
+                console.log('📝 Nessun dato trovato, inizializzazione vuota');
+                return [];
+                
+            } catch (error) {
+                console.error('Errore nel caricamento dati:', error);
+                showNotification('⚠️ Errore nel caricamento. I dati potrebbero essere corrotti.', 'error');
+                return [];
             }
         }
-        const backupData = localStorage.getItem('danceSubscriptions_backup');
-        if (backupData) {
-            const backup = JSON.parse(backupData);
-            if (backup.subscriptions && Array.isArray(backup.subscriptions)) {
-                console.log(`Recuperati ${backup.subscriptions.length} abbonamenti dal backup`);
-                showNotification('Dati recuperati dal backup automatico', 'success');
-                return backup.subscriptions;
+
+        // Imposta la data di oggi come default
+        document.getElementById('startDate').valueAsDate = new Date();
+
+        // Gestione form
+        document.getElementById('subscriptionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentName = document.getElementById('studentName').value;
+            const subscriptionType = document.getElementById('subscriptionType').value;
+            const startDate = document.getElementById('startDate').value;
+            const price = parseFloat(document.getElementById('price').value);
+            
+            const subscription = {
+                id: Date.now(),
+                studentName: studentName,
+                type: subscriptionType,
+                startDate: startDate,
+                price: price,
+                lessonsUsed: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            // Calcola data di scadenza
+            const startDateObj = new Date(startDate + 'T00:00:00');
+            if (subscription.type === 'monthly') {
+                subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + 1, startDateObj.getDate()).toISOString().split('T')[0];
+                subscription.totalLessons = null;
+            } else {
+                subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + 2, startDateObj.getDate()).toISOString().split('T')[0];
+                subscription.totalLessons = 6;
             }
-        }
-        return [];
-    } catch (error) {
-        console.error('Errore nel caricamento dati:', error);
-        showNotification('Errore nel caricamento. I dati potrebbero essere corrotti.', 'error');
-        return [];
-    }
-}
 
-document.getElementById('startDate').valueAsDate = new Date();
-
-document.getElementById('subscriptionForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const studentName = document.getElementById('studentName').value;
-    const subscriptionType = document.getElementById('subscriptionType').value;
-    const startDate = document.getElementById('startDate').value;
-    const price = parseFloat(document.getElementById('price').value);
-
-    const subscription = {
-        id: Date.now(),
-        studentName: studentName,
-        type: subscriptionType,
-        startDate: startDate,
-        price: price,
-        lessonsUsed: 0,
-        createdAt: new Date().toISOString()
-    };
-
-    const startDateObj = new Date(startDate + 'T00:00:00');
-    if (subscription.type === 'monthly') {
-        subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + 1, startDateObj.getDate()).toISOString().split('T')[0];
-        subscription.totalLessons = null;
-    } else {
-        subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + 2, startDateObj.getDate()).toISOString().split('T')[0];
-        subscription.totalLessons = 6;
-    }
-
-    subscriptions.push(subscription);
-    markAsChanged();
-    saveSubscriptions();
-    renderSubscriptions();
-    updateStats();
-
-    e.target.reset();
-    document.getElementById('startDate').valueAsDate = new Date();
-
-    showNotification('Abbonamento aggiunto con successo!', 'success');
-});
-
-function saveSubscriptions() {
-    try {
-        localStorage.setItem('danceSubscriptions', JSON.stringify(subscriptions));
-        const backupData = { subscriptions: subscriptions, timestamp: new Date().toISOString(), version: '1.0' };
-        localStorage.setItem('danceSubscriptions_backup', JSON.stringify(backupData));
-    } catch (error) {
-        console.error('Errore nel salvataggio:', error);
-        showNotification('Errore nel salvataggio dati. Prova a esportare un backup!', 'error');
-    }
-}
-
-function getSubscriptionStatus(subscription) {
-    const now = new Date(); now.setHours(0,0,0,0);
-    const expiry = new Date(subscription.expiryDate + 'T00:00:00');
-    const daysUntilExpiry = Math.ceil((expiry - now) / (1000*60*60*24));
-    if (subscription.type === 'bimonthly' && subscription.lessonsUsed >= subscription.totalLessons) return 'expired';
-    if (daysUntilExpiry < 0) return 'expired';
-    if (daysUntilExpiry <= 7) return 'expiring';
-    return 'active';
-}
-
-function renderSubscriptions() {
-    const container = document.getElementById('subscriptionsList');
-    const emptyMessage = document.getElementById('emptyMessage');
-    let filteredSubscriptions = subscriptions;
-    if (currentFilter !== 'all') {
-        if (currentFilter === 'monthly-active') {
-            filteredSubscriptions = subscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active');
-        } else if (currentFilter === 'bimonthly-active') {
-            filteredSubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active');
-        } else {
-            filteredSubscriptions = subscriptions.filter(sub => getSubscriptionStatus(sub) === currentFilter);
-        }
-    }
-    if (filteredSubscriptions.length === 0) {
-        container.innerHTML = '';
-        emptyMessage.style.display = 'block';
-        return;
-    }
-    emptyMessage.style.display = 'none';
-    container.innerHTML = filteredSubscriptions.map(subscription => {
-        const status = getSubscriptionStatus(subscription);
-        const statusClass = `status-${status}`;
-        const statusText = {'active':'Attivo','expiring':'In Scadenza','expired':'Scaduto'}[status];
-        const expiryDate = new Date(subscription.expiryDate + 'T00:00:00').toLocaleDateString('it-IT');
-        const startDate = new Date(subscription.startDate + 'T00:00:00').toLocaleDateString('it-IT');
-        let lessonInfo = '';
-        if (subscription.type === 'bimonthly') {
-            const progress = (subscription.lessonsUsed / subscription.totalLessons) * 100;
-            lessonInfo = `<div style="margin:.5rem 0;color:#4b5563;font-size:.9rem">Lezioni: ${subscription.lessonsUsed}/${subscription.totalLessons} — ${subscription.totalLessons - subscription.lessonsUsed} rimanenti</div>
-            <div style="height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden"><div style="height:8px;background:#7c3aed;width:${progress}%"></div></div>`;
-        }
-        return `<div class="subscription-card" data-status="${status}" style="margin-bottom:.75rem">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
-                <div>
-                    <h3 style="margin:0;font-size:1rem">${subscription.studentName}</h3>
-                    <div style="color:#6b7280;font-size:.9rem">${subscription.type === 'monthly' ? 'Abbonamento Mensile' : 'Abbonamento Bimestrale (6 lezioni)'}</div>
-                </div>
-                <div style="display:flex;gap:.4rem;align-items:center">
-                    <span class="${statusClass}">${statusText}</span>
-                    <button onclick="deleteSubscription(${subscription.id})" style="background:none;border:none;color:#ef4444;cursor:pointer">✖</button>
-                </div>
-            </div>
-            ${lessonInfo}
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;font-size:.9rem;color:#374151">
-                <div><div style="color:#6b7280;font-size:.8rem">Inizio</div><div>${startDate}</div></div>
-                <div><div style="color:#6b7280;font-size:.8rem">Scadenza</div><div>${expiryDate}</div></div>
-                <div><div style="color:#6b7280;font-size:.8rem">Prezzo</div><div>€${subscription.price.toFixed(2)}</div></div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function addLesson(subscriptionId) {
-    const subscription = subscriptions.find(sub => sub.id === subscriptionId);
-    if (subscription && subscription.lessonsUsed < subscription.totalLessons) {
-        subscription.lessonsUsed++;
-        markAsChanged();
-        saveSubscriptions();
-        renderSubscriptions();
-        updateStats();
-        showNotification('Lezione aggiunta!', 'success');
-    }
-}
-
-function deleteSubscription(subscriptionId) {
-    subscriptions = subscriptions.filter(sub => sub.id !== subscriptionId);
-    markAsChanged();
-    saveSubscriptions();
-    renderSubscriptions();
-    updateStats();
-    showNotification('Abbonamento eliminato', 'success');
-}
-
-function filterSubscriptions(filter) {
-    currentFilter = filter;
-    renderSubscriptions();
-}
-
-function updateStats() {
-    const totalRevenue = subscriptions.reduce((sum, sub) => sum + sub.price, 0);
-    const activeSubscriptions = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'active');
-    const totalLessons = subscriptions
-        .filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) !== 'expired')
-        .reduce((sum, sub) => sum + (sub.totalLessons - sub.lessonsUsed), 0);
-
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const monthlyRevenue = subscriptions
-        .filter(sub => {
-            const subDate = new Date(sub.startDate + 'T00:00:00');
-            return subDate.getMonth() === currentMonth && subDate.getFullYear() === currentYear;
-        })
-        .reduce((sum, sub) => {
-            if (sub.type === 'monthly') return sum + sub.price;
-            else return sum + (sub.price / 2);
-        }, 0);
-
-    const monthlySubscriptions = subscriptions.filter(sub => sub.type === 'monthly');
-    const bimonthlySubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly');
-
-    const monthlyTotal = monthlySubscriptions.reduce((sum, sub) => sum + sub.price, 0);
-    const bimonthlyTotal = bimonthlySubscriptions.reduce((sum, sub) => sum + sub.price, 0);
-    const averageRevenue = subscriptions.length > 0 ? totalRevenue / subscriptions.length : 0;
-
-    document.getElementById('totalRevenue').textContent = `€${totalRevenue.toFixed(2)}`;
-    document.getElementById('monthlyRevenue').textContent = `€${monthlyRevenue.toFixed(2)}`;
-    document.getElementById('activeCount').textContent = activeSubscriptions.length;
-    document.getElementById('totalLessons').textContent = totalLessons;
-
-    document.getElementById('monthlyTotal').textContent = `€${monthlyTotal.toFixed(2)}`;
-    try { document.getElementById('monthlyCount').textContent = `${monthlySubscriptions.length} abbonamenti`; } catch(e){}
-    try { document.getElementById('bimonthlyTotal').textContent = `€${bimonthlyTotal.toFixed(2)}`; } catch(e){}
-    try { document.getElementById('bimonthlyCount').textContent = `${bimonthlySubscriptions.length} abbonamenti`; } catch(e){}
-    try { document.getElementById('averageRevenue').textContent = `€${averageRevenue.toFixed(2)}`; } catch(e){}
-
-    const activeBimonthlySubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) !== 'expired');
-    const activeBimonthlyCount = activeBimonthlySubscriptions.length;
-    const averageLessonsPerStudent = activeBimonthlyCount > 0 ? totalLessons / activeBimonthlyCount : 0;
-
-    try { document.getElementById('activeBimonthlyCount').textContent = activeBimonthlyCount; } catch(e){}
-    try { document.getElementById('totalRemainingLessons').textContent = totalLessons; } catch(e){}
-    try { document.getElementById('averageLessonsPerStudent').textContent = averageLessonsPerStudent.toFixed(1); } catch(e){}
-
-    document.getElementById('count-all').textContent = subscriptions.length;
-    try { document.getElementById('count-active').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'active').length; } catch(e){}
-    try { document.getElementById('count-expiring').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'expiring').length; } catch(e){}
-    try { document.getElementById('count-expired').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'expired').length; } catch(e){}
-}
-
-function updateMonthlyBreakdown() {
-    // kept minimal for offline use
-}
-
-function updateStudentLessonsBreakdown() {
-    // kept minimal for offline use
-}
-
-function toggleRevenueDetails(){}
-
-function toggleLessonsDetails(){}
-
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.style.position='fixed';
-    notification.style.top='16px';
-    notification.style.right='16px';
-    notification.style.padding='12px 18px';
-    notification.style.borderRadius='8px';
-    notification.style.color='white';
-    notification.style.zIndex=9999;
-    notification.style.background = type === 'success' ? '#10b981' : '#ef4444';
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    setTimeout(()=>notification.remove(),2500);
-}
-
-function exportToCSV() {
-    if (subscriptions.length === 0) { showNotification('Nessun abbonamento da esportare','error'); return; }
-    const headers = ['Nome Allievo','Tipo Abbonamento','Data Inizio','Data Scadenza','Prezzo (€)','Lezioni Usate','Lezioni Totali','Stato','Data Creazione'];
-    const csvData = subscriptions.map(sub => {
-        const status = getSubscriptionStatus(sub);
-        const statusText = {'active':'Attivo','expiring':'In Scadenza','expired':'Scaduto'}[status];
-        return [sub.studentName, sub.type === 'monthly' ? 'Mensile' : 'Bimestrale', sub.startDate, sub.expiryDate, sub.price.toFixed(2), sub.lessonsUsed||0, sub.totalLessons||'N/A', statusText, new Date(sub.createdAt).toLocaleDateString('it-IT')];
-    });
-    const csvContent = [headers, ...csvData].map(row => row.map(field => `"${field}"`).join(',')).join('\\n');
-    const BOM = '\\uFEFF';
-    const csvWithBOM = BOM + csvContent;
-    try {
-        const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `abbonamenti_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(()=>URL.revokeObjectURL(url),1000);
-        showNotification('File CSV scaricato! Controlla la cartella Download','success');
-    } catch (error) {
-        navigator.clipboard.writeText(csvContent).then(()=>showNotification('Dati CSV copiati negli appunti!','success')).catch(()=>{
-            const textArea=document.createElement('textarea');textArea.value=csvContent;document.body.appendChild(textArea);textArea.select();document.execCommand('copy');document.body.removeChild(textArea);showNotification('Dati copiati negli appunti','success');
+            subscriptions.push(subscription);
+            markAsChanged();
+            saveSubscriptions();
+            renderSubscriptions();
+            updateStats();
+            
+            // Reset form
+            e.target.reset();
+            document.getElementById('startDate').valueAsDate = new Date();
+            
+            // Mostra messaggio di successo
+            showNotification('Abbonamento aggiunto con successo!', 'success');
         });
-    }
-}
 
-function exportToGoogleSheets() {
-    if (subscriptions.length === 0) { showNotification('Nessun abbonamento da esportare','error'); return; }
-    const headers = ['Nome Allievo','Tipo Abbonamento','Data Inizio','Data Scadenza','Prezzo (€)','Lezioni Usate','Lezioni Totali','Stato','Data Creazione'];
-    const sheetData = subscriptions.map(sub => {
-        const status = getSubscriptionStatus(sub);
-        const statusText = {'active':'Attivo','expiring':'In Scadenza','expired':'Scaduto'}[status];
-        return [sub.studentName, sub.type === 'monthly' ? 'Mensile' : 'Bimestrale', sub.startDate, sub.expiryDate, sub.price.toFixed(2), sub.lessonsUsed||0, sub.totalLessons||'N/A', statusText, new Date(sub.createdAt).toLocaleDateString('it-IT')];
-    });
-    const tsvContent = [headers, ...sheetData].map(row => row.join('\\t')).join('\\n');
-    navigator.clipboard.writeText(tsvContent).then(()=>{
-        showNotification('Dati copiati negli appunti! Apro Google Sheets...','success');
-        setTimeout(()=>window.open('https://sheets.google.com/create','_blank'),'1000');
-    }).catch(()=>{
-        const textArea=document.createElement('textarea');textArea.value=tsvContent;document.body.appendChild(textArea);textArea.select();document.execCommand('copy');document.body.removeChild(textArea);
-        showNotification('Dati copiati! Apro Google Sheets...','success');
-        setTimeout(()=>window.open('https://sheets.google.com/create','_blank'),'1000');
-    });
-}
+        function saveSubscriptions() {
+            try {
+                // Salva i dati nel localStorage
+                localStorage.setItem('danceSubscriptions', JSON.stringify(subscriptions));
+                
+                // Backup aggiuntivo: salva anche con timestamp
+                const backupData = {
+                    subscriptions: subscriptions,
+                    timestamp: new Date().toISOString(),
+                    version: '1.0'
+                };
+                localStorage.setItem('danceSubscriptions_backup', JSON.stringify(backupData));
+                
+                // Verifica che il salvataggio sia andato a buon fine
+                const saved = localStorage.getItem('danceSubscriptions');
+                if (!saved || JSON.parse(saved).length !== subscriptions.length) {
+                    console.warn('Possibile problema nel salvataggio dei dati');
+                }
+            } catch (error) {
+                console.error('Errore nel salvataggio:', error);
+                showNotification('⚠️ Errore nel salvataggio dati. Prova a esportare un backup!', 'error');
+            }
+        }
 
-function importFromCSV(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const csv = e.target.result;
-            const lines = csv.split('\\n').filter(line => line.trim());
-            if (lines.length < 2) { showNotification('File CSV vuoto o non valido','error'); return; }
-            const dataLines = lines.slice(1);
-            let importedCount=0, skippedCount=0;
-            dataLines.forEach(line => {
-                const fields = line.split(',').map(field => field.replace(/^"|"$/g,'').trim());
-                if (fields.length >= 6) {
-                    const studentName = fields[0];
-                    const type = fields[1] === 'Mensile' ? 'monthly' : 'bimonthly';
-                    const startDate = fields[2];
-                    const expiryDate = fields[3];
-                    const price = parseFloat(fields[4]);
-                    const lessonsUsed = parseInt(fields[5]) || 0;
-                    const totalLessons = fields[6] === 'N/A' ? null : parseInt(fields[6]);
-                    const exists = subscriptions.some(sub => sub.studentName === studentName && sub.startDate === startDate && sub.type === type);
-                    if (!exists && studentName && startDate && !isNaN(price)) {
-                        const subscription = { id: Date.now() + Math.random(), studentName, type, startDate, expiryDate, price, lessonsUsed, totalLessons, createdAt: new Date().toISOString() };
-                        subscriptions.push(subscription); importedCount++;
-                    } else skippedCount++;
+        function getSubscriptionStatus(subscription) {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // Reset ore per confronto corretto
+            
+            const expiry = new Date(subscription.expiryDate + 'T00:00:00');
+            const daysUntilExpiry = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+            
+            // Per abbonamenti bimestrali, controlla anche le lezioni
+            if (subscription.type === 'bimonthly' && subscription.lessonsUsed >= subscription.totalLessons) {
+                return 'expired';
+            }
+            
+            if (daysUntilExpiry < 0) return 'expired';
+            if (daysUntilExpiry <= 7) return 'expiring';
+            return 'active';
+        }
+
+        function renderSubscriptions() {
+            const container = document.getElementById('subscriptionsList');
+            const emptyMessage = document.getElementById('emptyMessage');
+            
+            let filteredSubscriptions = subscriptions;
+            if (currentFilter !== 'all') {
+                if (currentFilter === 'monthly-active') {
+                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active');
+                } else if (currentFilter === 'bimonthly-active') {
+                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active');
+                } else {
+                    filteredSubscriptions = subscriptions.filter(sub => getSubscriptionStatus(sub) === currentFilter);
+                }
+            }
+
+            if (filteredSubscriptions.length === 0) {
+                container.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+
+            emptyMessage.style.display = 'none';
+            
+            container.innerHTML = filteredSubscriptions.map(subscription => {
+                const status = getSubscriptionStatus(subscription);
+                const statusClass = `status-${status}`;
+                const statusText = {
+                    'active': 'Attivo',
+                    'expiring': 'In Scadenza',
+                    'expired': 'Scaduto'
+                }[status];
+
+                const expiryDate = new Date(subscription.expiryDate + 'T00:00:00').toLocaleDateString('it-IT');
+                const startDate = new Date(subscription.startDate + 'T00:00:00').toLocaleDateString('it-IT');
+                
+                let progressBar = '';
+                let lessonInfo = '';
+                
+                if (subscription.type === 'bimonthly') {
+                    const progress = (subscription.lessonsUsed / subscription.totalLessons) * 100;
+                    lessonInfo = `
+                        <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                            <span>Lezioni: ${subscription.lessonsUsed}/${subscription.totalLessons}</span>
+                            <span>${subscription.totalLessons - subscription.lessonsUsed} rimanenti</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="subscription-card bg-white rounded-xl shadow-lg p-6 fade-in" data-status="${status}">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-800">${subscription.studentName}</h3>
+                                <p class="text-gray-600">${subscription.type === 'monthly' ? 'Abbonamento Mensile' : 'Abbonamento Bimestrale (6 lezioni)'}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="${statusClass} text-white px-3 py-1 rounded-full text-sm font-medium">
+                                    ${statusText}
+                                </span>
+                                <button onclick="deleteSubscription(${subscription.id})" 
+                                        class="text-red-500 hover:text-red-700 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${lessonInfo}
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Inizio:</span>
+                                <div class="font-medium text-xs sm:text-sm">${startDate}</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Scadenza:</span>
+                                <div class="font-medium text-xs sm:text-sm">${expiryDate}</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Prezzo:</span>
+                                <div class="font-medium">€${subscription.price.toFixed(2)}</div>
+                            </div>
+                            ${subscription.type === 'bimonthly' ? `
+                                <div class="col-span-2 sm:col-span-1">
+                                    <button onclick="addLesson(${subscription.id})" 
+                                            class="w-full bg-purple-600 text-white px-3 py-2 rounded-lg text-xs hover:bg-purple-700 transition-colors ${subscription.lessonsUsed >= subscription.totalLessons ? 'opacity-50 cursor-not-allowed' : ''}">
+                                        + Lezione
+                                    </button>
+                                </div>
+                            ` : '<div></div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addLesson(subscriptionId) {
+            const subscription = subscriptions.find(sub => sub.id === subscriptionId);
+            if (subscription && subscription.lessonsUsed < subscription.totalLessons) {
+                subscription.lessonsUsed++;
+                markAsChanged();
+                saveSubscriptions();
+                renderSubscriptions();
+                updateStats();
+                showNotification('Lezione aggiunta!', 'success');
+            }
+        }
+
+        function deleteSubscription(subscriptionId) {
+            // Trova la carta specifica usando l'ID
+            const cards = document.querySelectorAll('.subscription-card');
+            let targetCard = null;
+            
+            cards.forEach(card => {
+                const deleteButton = card.querySelector(`button[onclick*="${subscriptionId}"]`);
+                if (deleteButton && deleteButton.getAttribute('onclick').includes('deleteSubscription')) {
+                    targetCard = card;
                 }
             });
-            if (importedCount>0){ markAsChanged(); saveSubscriptions(); renderSubscriptions(); updateStats(); let message = `Importati ${importedCount} abbonamenti`; if (skippedCount>0) message += ` (${skippedCount} duplicati saltati)`; showNotification(message,'success'); } else showNotification('Nessun nuovo abbonamento da importare','error');
-        } catch (error) { showNotification('Errore durante l\\'importazione del file CSV','error'); console.error('Import error:', error); }
-    };
-    reader.readAsText(file);
-    event.target.value='';
-}
+            
+            if (!targetCard) return;
+            
+            // Nascondi il pulsante elimina per evitare doppi click
+            const deleteButton = targetCard.querySelector(`button[onclick*="deleteSubscription(${subscriptionId})"]`);
+            if (deleteButton) {
+                deleteButton.style.display = 'none';
+            }
+            
+            // Salva il contenuto originale
+            const originalContent = targetCard.innerHTML;
+            
+            // Mostra la conferma
+            targetCard.innerHTML = `
+                <div class="text-center py-8 px-4">
+                    <div class="mb-4">
+                        <svg class="w-12 h-12 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <p class="text-lg text-gray-700 font-medium">Elimina Abbonamento</p>
+                        <p class="text-sm text-gray-600 mt-1">Questa azione non può essere annullata</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button onclick="confirmDelete(${subscriptionId})" 
+                                class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Conferma Eliminazione
+                        </button>
+                        <button onclick="cancelDelete(${subscriptionId})" 
+                                class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                            Annulla
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Salva il contenuto originale nell'attributo data per il ripristino
+            targetCard.setAttribute('data-original-content', originalContent);
+        }
 
-let lastSaveTime = Date.now();
-let hasUnsavedChanges = false;
-function markAsChanged(){ hasUnsavedChanges = true; }
-function autoSave(){ if (hasUnsavedChanges && subscriptions.length>0) { saveSubscriptions(); hasUnsavedChanges=false; lastSaveTime=Date.now(); console.log('Salvataggio automatico completato'); } }
-setInterval(autoSave,30000);
-window.addEventListener('beforeunload', function(e){ if (hasUnsavedChanges) { saveSubscriptions(); console.log('Dati salvati prima della chiusura'); } });
-window.addEventListener('blur', function(){ if (hasUnsavedChanges){ saveSubscriptions(); console.log('Dati salvati per sicurezza'); } });
+        function confirmDelete(subscriptionId) {
+            subscriptions = subscriptions.filter(sub => sub.id !== subscriptionId);
+            markAsChanged();
+            saveSubscriptions();
+            renderSubscriptions();
+            updateStats();
+            showNotification('Abbonamento eliminato', 'success');
+        }
 
-function checkStorageStatus(){ try { const testKey='localStorage_test'; localStorage.setItem(testKey,'test'); localStorage.removeItem(testKey); const currentData = localStorage.getItem('danceSubscriptions'); if (currentData) { const count = JSON.parse(currentData).length; console.log(`LocalStorage funzionante - ${count} abbonamenti salvati`); } else { console.log('LocalStorage funzionante - nessun dato salvato'); } } catch (error) { console.error('Problema con localStorage:', error); showNotification('Problema con il salvataggio automatico. Esporta regolarmente i dati!','error'); } }
-checkStorageStatus();
-renderSubscriptions();
-updateStats();
+        function cancelDelete(subscriptionId) {
+            // Trova la carta specifica e ripristina il contenuto
+            const cards = document.querySelectorAll('.subscription-card');
+            cards.forEach(card => {
+                const confirmButton = card.querySelector(`button[onclick*="confirmDelete(${subscriptionId})"]`);
+                if (confirmButton) {
+                    const originalContent = card.getAttribute('data-original-content');
+                    if (originalContent) {
+                        card.innerHTML = originalContent;
+                        card.removeAttribute('data-original-content');
+                        
+                        // Rimostra il pulsante elimina che era stato nascosto
+                        const deleteButton = card.querySelector(`button[onclick*="deleteSubscription(${subscriptionId})"]`);
+                        if (deleteButton) {
+                            deleteButton.style.display = '';
+                        }
+                    }
+                }
+            });
+        }
 
-// Register service worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js').then(()=>console.log('Service Worker registrato')).catch(err=>console.error(err));
-}
-</script>
-</body>
+        function filterSubscriptions(filter) {
+            currentFilter = filter;
+            
+            // Aggiorna stile bottoni
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-purple-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            
+            event.target.classList.remove('bg-gray-200', 'text-gray-700');
+            event.target.classList.add('active', 'bg-purple-600', 'text-white');
+            
+            renderSubscriptions();
+        }
+
+        function updateStats() {
+            const totalRevenue = subscriptions.reduce((sum, sub) => sum + sub.price, 0);
+            const activeSubscriptions = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'active');
+            const totalLessons = subscriptions
+                .filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) !== 'expired')
+                .reduce((sum, sub) => sum + (sub.totalLessons - sub.lessonsUsed), 0);
+
+            // Calcola ricavi del mese corrente
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyRevenue = subscriptions
+                .filter(sub => {
+                    const subDate = new Date(sub.startDate + 'T00:00:00');
+                    return subDate.getMonth() === currentMonth && subDate.getFullYear() === currentYear;
+                })
+                .reduce((sum, sub) => {
+                    // Abbonamenti mensili: prezzo completo
+                    if (sub.type === 'monthly') {
+                        return sum + sub.price;
+                    }
+                    // Abbonamenti bimestrali: metà prezzo al mese corrente
+                    else {
+                        return sum + (sub.price / 2);
+                    }
+                }, 0);
+
+            // Calcola statistiche per tipo
+            const monthlySubscriptions = subscriptions.filter(sub => sub.type === 'monthly');
+            const bimonthlySubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly');
+            
+            const monthlyTotal = monthlySubscriptions.reduce((sum, sub) => sum + sub.price, 0);
+            const bimonthlyTotal = bimonthlySubscriptions.reduce((sum, sub) => sum + sub.price, 0);
+            const averageRevenue = subscriptions.length > 0 ? totalRevenue / subscriptions.length : 0;
+
+            // Aggiorna UI
+            document.getElementById('totalRevenue').textContent = `€${totalRevenue.toFixed(2)}`;
+            document.getElementById('monthlyRevenue').textContent = `€${monthlyRevenue.toFixed(2)}`;
+            document.getElementById('activeCount').textContent = activeSubscriptions.length;
+            document.getElementById('totalLessons').textContent = totalLessons;
+
+            // Aggiorna dettagli ricavi
+            document.getElementById('monthlyTotal').textContent = `€${monthlyTotal.toFixed(2)}`;
+            document.getElementById('monthlyCount').textContent = `${monthlySubscriptions.length} abbonamenti`;
+            document.getElementById('bimonthlyTotal').textContent = `€${bimonthlyTotal.toFixed(2)}`;
+            document.getElementById('bimonthlyCount').textContent = `${bimonthlySubscriptions.length} abbonamenti`;
+            document.getElementById('averageRevenue').textContent = `€${averageRevenue.toFixed(2)}`;
+
+            // Calcola statistiche lezioni dettagliate
+            const activeBimonthlySubscriptions = subscriptions.filter(sub => 
+                sub.type === 'bimonthly' && getSubscriptionStatus(sub) !== 'expired'
+            );
+            const activeBimonthlyCount = activeBimonthlySubscriptions.length;
+            const averageLessonsPerStudent = activeBimonthlyCount > 0 ? 
+                totalLessons / activeBimonthlyCount : 0;
+
+            // Aggiorna dettagli lezioni
+            document.getElementById('activeBimonthlyCount').textContent = activeBimonthlyCount;
+            document.getElementById('totalRemainingLessons').textContent = totalLessons;
+            document.getElementById('averageLessonsPerStudent').textContent = averageLessonsPerStudent.toFixed(1);
+
+            // Aggiorna contatori nei filtri
+            document.getElementById('count-all').textContent = subscriptions.length;
+            document.getElementById('count-active').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'active').length;
+            document.getElementById('count-expiring').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'expiring').length;
+            document.getElementById('count-expired').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'expired').length;
+            document.getElementById('count-monthly-active').textContent = subscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active').length;
+            document.getElementById('count-bimonthly-active').textContent = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active').length;
+
+            // Aggiorna breakdown mensile e lezioni
+            updateMonthlyBreakdown();
+            updateStudentLessonsBreakdown();
+        }
+
+        function updateMonthlyBreakdown() {
+            const monthlyData = {};
+            
+            subscriptions.forEach(sub => {
+                const date = new Date(sub.startDate + 'T00:00:00');
+                
+                if (sub.type === 'monthly') {
+                    // Abbonamenti mensili: tutto al mese di inizio
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    const monthName = date.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+                    
+                    if (!monthlyData[monthKey]) {
+                        monthlyData[monthKey] = {
+                            name: monthName,
+                            revenue: 0,
+                            count: 0
+                        };
+                    }
+                    
+                    monthlyData[monthKey].revenue += sub.price;
+                    monthlyData[monthKey].count += 1;
+                } else {
+                    // Abbonamenti bimestrali: metà al primo mese, metà al secondo
+                    const firstMonth = date;
+                    const secondMonth = new Date(date.getFullYear(), date.getMonth() + 1, date.getDate());
+                    
+                    // Primo mese
+                    const firstMonthKey = `${firstMonth.getFullYear()}-${String(firstMonth.getMonth() + 1).padStart(2, '0')}`;
+                    const firstMonthName = firstMonth.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+                    
+                    if (!monthlyData[firstMonthKey]) {
+                        monthlyData[firstMonthKey] = {
+                            name: firstMonthName,
+                            revenue: 0,
+                            count: 0
+                        };
+                    }
+                    
+                    monthlyData[firstMonthKey].revenue += sub.price / 2;
+                    monthlyData[firstMonthKey].count += 0.5;
+                    
+                    // Secondo mese
+                    const secondMonthKey = `${secondMonth.getFullYear()}-${String(secondMonth.getMonth() + 1).padStart(2, '0')}`;
+                    const secondMonthName = secondMonth.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+                    
+                    if (!monthlyData[secondMonthKey]) {
+                        monthlyData[secondMonthKey] = {
+                            name: secondMonthName,
+                            revenue: 0,
+                            count: 0
+                        };
+                    }
+                    
+                    monthlyData[secondMonthKey].revenue += sub.price / 2;
+                    monthlyData[secondMonthKey].count += 0.5;
+                }
+            });
+
+            const sortedMonths = Object.keys(monthlyData).sort().reverse();
+            const breakdownContainer = document.getElementById('monthlyBreakdown');
+            
+            if (sortedMonths.length === 0) {
+                breakdownContainer.innerHTML = '<p class="text-gray-500 text-sm">Nessun dato disponibile</p>';
+                return;
+            }
+
+            breakdownContainer.innerHTML = sortedMonths.map(monthKey => {
+                const data = monthlyData[monthKey];
+                const countText = data.count % 1 === 0 ? 
+                    `${data.count} abbonamenti` : 
+                    `${data.count} abbonamenti (inclusi bimestrali)`;
+                return `
+                    <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                        <div>
+                            <span class="font-medium text-gray-700">${data.name}</span>
+                            <span class="text-sm text-gray-500 ml-2">(${countText})</span>
+                        </div>
+                        <span class="font-semibold text-gray-800">€${data.revenue.toFixed(2)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStudentLessonsBreakdown() {
+            const activeBimonthlySubscriptions = subscriptions.filter(sub => 
+                sub.type === 'bimonthly' && getSubscriptionStatus(sub) !== 'expired'
+            );
+            
+            const breakdownContainer = document.getElementById('studentLessonsBreakdown');
+            
+            if (activeBimonthlySubscriptions.length === 0) {
+                breakdownContainer.innerHTML = '<p class="text-gray-500 text-sm">Nessun abbonamento bimestrale attivo</p>';
+                return;
+            }
+
+            // Ordina per lezioni rimanenti (decrescente)
+            activeBimonthlySubscriptions.sort((a, b) => {
+                const remainingA = a.totalLessons - a.lessonsUsed;
+                const remainingB = b.totalLessons - b.lessonsUsed;
+                return remainingB - remainingA;
+            });
+
+            breakdownContainer.innerHTML = activeBimonthlySubscriptions.map(sub => {
+                const remaining = sub.totalLessons - sub.lessonsUsed;
+                const progress = (sub.lessonsUsed / sub.totalLessons) * 100;
+                const status = getSubscriptionStatus(sub);
+                const statusColor = status === 'active' ? 'text-green-600' : 
+                                  status === 'expiring' ? 'text-yellow-600' : 'text-red-600';
+                const expiryDate = new Date(sub.expiryDate + 'T00:00:00').toLocaleDateString('it-IT');
+                
+                return `
+                    <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-medium text-gray-700">${sub.studentName}</span>
+                                <span class="text-sm ${statusColor} font-medium">
+                                    ${remaining} lezioni rimanenti
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                <span>Usate: ${sub.lessonsUsed}/${sub.totalLessons}</span>
+                                <span>Scade: ${expiryDate}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div class="bg-purple-600 h-1.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleRevenueDetails() {
+            const details = document.getElementById('revenueDetails');
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                details.classList.add('fade-in');
+            } else {
+                details.classList.add('hidden');
+            }
+        }
+
+        function toggleLessonsDetails() {
+            const details = document.getElementById('lessonsDetails');
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                details.classList.add('fade-in');
+            } else {
+                details.classList.add('hidden');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 fade-in ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Funzioni Export/Import
+        function exportToCSV() {
+            if (subscriptions.length === 0) {
+                showNotification('Nessun abbonamento da esportare', 'error');
+                return;
+            }
+
+            const headers = [
+                'Nome Allievo',
+                'Tipo Abbonamento',
+                'Data Inizio',
+                'Data Scadenza',
+                'Prezzo (€)',
+                'Lezioni Usate',
+                'Lezioni Totali',
+                'Stato',
+                'Data Creazione'
+            ];
+
+            const csvData = subscriptions.map(sub => {
+                const status = getSubscriptionStatus(sub);
+                const statusText = {
+                    'active': 'Attivo',
+                    'expiring': 'In Scadenza',
+                    'expired': 'Scaduto'
+                }[status];
+
+                return [
+                    sub.studentName,
+                    sub.type === 'monthly' ? 'Mensile' : 'Bimestrale',
+                    sub.startDate,
+                    sub.expiryDate,
+                    sub.price.toFixed(2),
+                    sub.lessonsUsed || 0,
+                    sub.totalLessons || 'N/A',
+                    statusText,
+                    new Date(sub.createdAt).toLocaleDateString('it-IT')
+                ];
+            });
+
+            const csvContent = [headers, ...csvData]
+                .map(row => row.map(field => `"${field}"`).join(','))
+                .join('\n');
+
+            // Aggiungi BOM UTF-8 per compatibilità Excel
+            const BOM = '\uFEFF';
+            const csvWithBOM = BOM + csvContent;
+
+            try {
+                // Metodo principale: download diretto
+                const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `abbonamenti_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Pulisci l'URL dopo un breve delay
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 1000);
+                
+                showNotification(`✅ File CSV scaricato! Controlla la cartella Download`, 'success');
+                
+            } catch (error) {
+                // Metodo di backup: copia negli appunti
+                console.log('Download fallito, uso metodo backup:', error);
+                
+                navigator.clipboard.writeText(csvContent).then(() => {
+                    showNotification('📋 Dati CSV copiati negli appunti! Incolla in Excel/Google Sheets', 'success');
+                }).catch(() => {
+                    // Ultimo fallback: textarea temporanea
+                    const textArea = document.createElement('textarea');
+                    textArea.value = csvContent;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    showNotification('📋 Dati CSV copiati negli appunti (metodo alternativo)', 'success');
+                });
+            }
+        }
+
+        function exportToGoogleSheets() {
+            if (subscriptions.length === 0) {
+                showNotification('Nessun abbonamento da esportare', 'error');
+                return;
+            }
+
+            const headers = [
+                'Nome Allievo',
+                'Tipo Abbonamento',
+                'Data Inizio',
+                'Data Scadenza',
+                'Prezzo (€)',
+                'Lezioni Usate',
+                'Lezioni Totali',
+                'Stato',
+                'Data Creazione'
+            ];
+
+            const sheetData = subscriptions.map(sub => {
+                const status = getSubscriptionStatus(sub);
+                const statusText = {
+                    'active': 'Attivo',
+                    'expiring': 'In Scadenza',
+                    'expired': 'Scaduto'
+                }[status];
+
+                return [
+                    sub.studentName,
+                    sub.type === 'monthly' ? 'Mensile' : 'Bimestrale',
+                    sub.startDate,
+                    sub.expiryDate,
+                    sub.price.toFixed(2),
+                    sub.lessonsUsed || 0,
+                    sub.totalLessons || 'N/A',
+                    statusText,
+                    new Date(sub.createdAt).toLocaleDateString('it-IT')
+                ];
+            });
+
+            const tsvContent = [headers, ...sheetData]
+                .map(row => row.join('\t'))
+                .join('\n');
+
+            // Copia negli appunti
+            navigator.clipboard.writeText(tsvContent).then(() => {
+                showNotification('Dati copiati negli appunti! Apro Google Sheets...', 'success');
+                
+                // Apri Google Sheets in una nuova finestra
+                setTimeout(() => {
+                    window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
+                }, 1000);
+            }).catch(() => {
+                // Fallback se clipboard non funziona
+                const textArea = document.createElement('textarea');
+                textArea.value = tsvContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                showNotification('Dati copiati! Apro Google Sheets...', 'success');
+                setTimeout(() => {
+                    window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
+                }, 1000);
+            });
+        }
+
+        function importFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length < 2) {
+                        showNotification('File CSV vuoto o non valido', 'error');
+                        return;
+                    }
+
+                    // Salta la prima riga (headers)
+                    const dataLines = lines.slice(1);
+                    let importedCount = 0;
+                    let skippedCount = 0;
+
+                    dataLines.forEach(line => {
+                        const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
+                        
+                        if (fields.length >= 6) {
+                            const studentName = fields[0];
+                            const type = fields[1] === 'Mensile' ? 'monthly' : 'bimonthly';
+                            const startDate = fields[2];
+                            const expiryDate = fields[3];
+                            const price = parseFloat(fields[4]);
+                            const lessonsUsed = parseInt(fields[5]) || 0;
+                            const totalLessons = fields[6] === 'N/A' ? null : parseInt(fields[6]);
+
+                            // Controlla se l'abbonamento esiste già
+                            const exists = subscriptions.some(sub => 
+                                sub.studentName === studentName && 
+                                sub.startDate === startDate &&
+                                sub.type === type
+                            );
+
+                            if (!exists && studentName && startDate && !isNaN(price)) {
+                                const subscription = {
+                                    id: Date.now() + Math.random(),
+                                    studentName: studentName,
+                                    type: type,
+                                    startDate: startDate,
+                                    expiryDate: expiryDate,
+                                    price: price,
+                                    lessonsUsed: lessonsUsed,
+                                    totalLessons: totalLessons,
+                                    createdAt: new Date().toISOString()
+                                };
+
+                                subscriptions.push(subscription);
+                                importedCount++;
+                            } else {
+                                skippedCount++;
+                            }
+                        }
+                    });
+
+                    if (importedCount > 0) {
+                        markAsChanged();
+                        saveSubscriptions();
+                        renderSubscriptions();
+                        updateStats();
+                        
+                        let message = `Importati ${importedCount} abbonamenti`;
+                        if (skippedCount > 0) {
+                            message += ` (${skippedCount} duplicati saltati)`;
+                        }
+                        showNotification(message, 'success');
+                    } else {
+                        showNotification('Nessun nuovo abbonamento da importare', 'error');
+                    }
+
+                } catch (error) {
+                    showNotification('Errore durante l\'importazione del file CSV', 'error');
+                    console.error('Import error:', error);
+                }
+            };
+
+            reader.readAsText(file);
+            
+            // Reset input file
+            event.target.value = '';
+        }
+
+        // Salvataggio automatico ogni 30 secondi (se ci sono modifiche)
+        let lastSaveTime = Date.now();
+        let hasUnsavedChanges = false;
+
+        function markAsChanged() {
+            hasUnsavedChanges = true;
+        }
+
+        function autoSave() {
+            if (hasUnsavedChanges && subscriptions.length > 0) {
+                saveSubscriptions();
+                hasUnsavedChanges = false;
+                lastSaveTime = Date.now();
+                console.log('💾 Salvataggio automatico completato');
+            }
+        }
+
+        // Salvataggio automatico ogni 30 secondi
+        setInterval(autoSave, 30000);
+
+        // Salva prima di chiudere la pagina
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                saveSubscriptions();
+                console.log('💾 Dati salvati prima della chiusura');
+            }
+        });
+
+        // Salva quando la pagina perde il focus
+        window.addEventListener('blur', function() {
+            if (hasUnsavedChanges) {
+                saveSubscriptions();
+                console.log('💾 Dati salvati per sicurezza');
+            }
+        });
+
+        // Mostra stato del localStorage all'avvio
+        function checkStorageStatus() {
+            try {
+                const testKey = 'localStorage_test';
+                localStorage.setItem(testKey, 'test');
+                localStorage.removeItem(testKey);
+                
+                const currentData = localStorage.getItem('danceSubscriptions');
+                if (currentData) {
+                    const count = JSON.parse(currentData).length;
+                    console.log(`💾 LocalStorage funzionante - ${count} abbonamenti salvati`);
+                } else {
+                    console.log('💾 LocalStorage funzionante - nessun dato salvato');
+                }
+            } catch (error) {
+                console.error('❌ Problema con localStorage:', error);
+                showNotification('⚠️ Problema con il salvataggio automatico. Esporta regolarmente i dati!', 'error');
+            }
+        }
+
+        // Inizializza l'app
+        checkStorageStatus();
+        renderSubscriptions();
+        updateStats();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'994a7a8bf0890e83',t:'MTc2MTQ4NzIxMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
