@@ -1,6 +1,6 @@
-const CACHE_NAME = "cubaila-v1";
+const CACHE_NAME = "cubaila-v2";
 const FILES_TO_CACHE = [
-  "./Abbonamenti2025_offline.html",
+  "./index.html",
   "./manifest.json",
   "./icon192.png",
   "./icon512.png"
