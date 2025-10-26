@@ -1,7 +1,7 @@
 {
   "name": "Cubaila Abbonamenti",
   "short_name": "Abbonamenti",
-  "start_url": "./Abbonamenti2025_offline.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f9fafb",
   "theme_color": "#9333ea",
