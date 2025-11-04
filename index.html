@@ -65,7 +65,7 @@
    <header class="text-center mb-8">
     <h1 class="text-4xl font-bold text-gray-800 mb-2">Gestione Abbonamenti</h1>
    </header><!-- Pulsante per nuovo abbonamento -->
-   <div class="text-center mb-8"><button onclick="toggleNewSubscriptionForm()" id="newSubscriptionBtn" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg"> ➕ Nuovo Abbonamento </button>
+   <div class="mb-8"><button onclick="toggleNewSubscriptionForm()" id="newSubscriptionBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg"> ➕ Nuovo Abbonamento </button>
    </div><!-- Form per nuovo abbonamento (nascosto di default) -->
    <div id="newSubscriptionForm" class="bg-white rounded-xl shadow-lg p-6 mb-8 hidden">
     <div class="flex items-center justify-between mb-6">
@@ -505,7 +505,7 @@
                     // Prendi l'abbonamento attivo più recente
                     currentSubscription = activeSubscriptions.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
                     overallStatus = 'active';
-                    statusText = 'Abbonamento Attivo';
+                    statusText = 'Attivo';
                     statusClass = 'status-active';
                 } else if (expiringSubscriptions.length > 0) {
                     // Prendi l'abbonamento in scadenza più recente
@@ -517,7 +517,7 @@
                     // Prendi l'abbonamento scaduto più recente
                     currentSubscription = expiredSubscriptions.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
                     overallStatus = 'expired';
-                    statusText = 'Abbonamento Scaduto';
+                    statusText = 'Scaduto';
                     statusClass = 'status-expired';
                 }
                 
@@ -1587,5 +1587,5 @@
         setView('subscriptions'); // Inizia con la vista abbonamenti
         updateStats();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'999387b583930d6e',t:'MTc2MjI1MzIxMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99939ca1d63cee67',t:'MTc2MjI1NDA3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
