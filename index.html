@@ -65,7 +65,9 @@
    <header class="text-center mb-8">
     <h1 class="text-4xl font-bold text-gray-800 mb-2">Gestione Abbonamenti</h1>
    </header><!-- Pulsante per nuovo abbonamento -->
-   <div class="mb-8"><button onclick="toggleNewSubscriptionForm()" id="newSubscriptionBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg"> ➕ Nuovo Abbonamento </button>
+   <div class="mb-4"><button onclick="toggleNewSubscriptionForm()" id="newSubscriptionBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg"> ➕ Nuovo Abbonamento </button>
+   </div><!-- Pulsanti Nuovo, Salva, Apri, Google Sheets -->
+   <div class="mb-8 grid grid-cols-4 gap-2"><button onclick="showNewListPopup()" class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium"> 📄 Nuovo </button> <button onclick="exportToCSV()" class="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm font-medium"> 💾 Salva </button> <button onclick="document.getElementById('importFile').click()" class="px-3 py-2 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors text-sm font-medium"> 📂 Apri </button> <button onclick="exportToGoogleSheets()" class="px-3 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors text-sm font-medium"> 📋 Google Sheets </button> <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
    </div><!-- Form per nuovo abbonamento (nascosto di default) -->
    <div id="newSubscriptionForm" class="bg-white rounded-xl shadow-lg p-6 mb-8 hidden">
     <div class="flex items-center justify-between mb-6">
@@ -92,9 +94,7 @@
    </div><!-- Filtri e statistiche -->
    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
     <div class="mb-6">
-     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Lista Abbonamenti</h2><!-- Pulsanti Export/Import -->
-     <div class="flex flex-wrap gap-2 mb-4 justify-center sm:justify-start"><button onclick="exportToCSV()" class="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm min-w-0"> 📊 Scarica CSV </button> <button onclick="document.getElementById('importFile').click()" class="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm min-w-0"> 📁 Importa CSV </button> <button onclick="exportToGoogleSheets()" class="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors text-sm min-w-0"> 📋 Google Sheets </button> <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
-     </div><!-- Toggle Vista -->
+     <h2 id="listTitle" class="text-2xl font-semibold text-gray-800 mb-4">Lista Abbonamenti</h2><!-- Toggle Vista -->
      <div class="flex gap-2 mb-4"><button onclick="setView('subscriptions')" id="viewSubscriptions" class="view-btn flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg transition-colors font-medium"> 📋 Vista Abbonamenti </button> <button onclick="setView('students')" id="viewStudents" class="view-btn flex-1 px-4 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg transition-colors font-medium"> 👥 Vista Allievi </button>
      </div><!-- Toggle Filtri (solo per vista abbonamenti) -->
      <div id="filtersSection"><button onclick="toggleFilters()" class="filters-toggle w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mb-4"> <span class="font-medium text-gray-700">🔍 Filtri</span>
@@ -266,6 +266,7 @@
         let subscriptions = loadSubscriptions();
         let currentFilter = 'all';
         let currentView = 'subscriptions';
+        let currentListName = localStorage.getItem('currentListName') || 'Lista Abbonamenti';
 
         function loadSubscriptions() {
             try {
@@ -302,6 +303,85 @@
 
         // Imposta la data di oggi come default
         document.getElementById('startDate').valueAsDate = new Date();
+
+        // Aggiorna il titolo della lista all'avvio
+        document.getElementById('listTitle').textContent = currentListName;
+
+        function showNewListPopup() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Nuova Lista Abbonamenti</h2>
+                    <form id="newListForm" class="space-y-4">
+                        <div>
+                            <label for="listName" class="block text-sm font-medium text-gray-700 mb-2">Nome della Lista</label>
+                            <input type="text" id="listName" required 
+                                   placeholder="Es: Corso Principianti 2024"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="submit" 
+                                    class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                                Crea Lista
+                            </button>
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                Annulla
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus sul campo input
+            setTimeout(() => {
+                document.getElementById('listName').focus();
+            }, 100);
+            
+            // Gestione submit form
+            document.getElementById('newListForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const listName = document.getElementById('listName').value.trim();
+                
+                if (listName) {
+                    // Salva la lista corrente prima di creare una nuova
+                    if (subscriptions.length > 0) {
+                        const confirmSave = confirm('Vuoi salvare la lista corrente prima di crearne una nuova?');
+                        if (confirmSave) {
+                            exportToCSV();
+                        }
+                    }
+                    
+                    // Crea nuova lista vuota
+                    subscriptions = [];
+                    currentListName = listName;
+                    localStorage.setItem('currentListName', currentListName);
+                    document.getElementById('listTitle').textContent = currentListName;
+                    
+                    saveSubscriptions();
+                    
+                    if (currentView === 'subscriptions') {
+                        renderSubscriptions();
+                    } else {
+                        renderStudents();
+                    }
+                    updateStats();
+                    
+                    modal.remove();
+                    showNotification(`Nuova lista "${listName}" creata!`, 'success');
+                }
+            });
+            
+            // Chiudi modal cliccando fuori
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
 
         function toggleNewSubscriptionForm() {
             const form = document.getElementById('newSubscriptionForm');
@@ -1320,7 +1400,7 @@
                 const url = URL.createObjectURL(blob);
                 
                 link.setAttribute('href', url);
-                link.setAttribute('download', `abbonamenti_${new Date().toISOString().split('T')[0]}.csv`);
+                link.setAttribute('download', `${currentListName}.csv`);
                 link.style.visibility = 'hidden';
                 
                 document.body.appendChild(link);
@@ -1430,6 +1510,9 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            // Estrai il nome del file senza estensione
+            const fileName = file.name.replace(/\.[^/.]+$/, '');
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -1489,6 +1572,11 @@
                     });
 
                     if (importedCount > 0) {
+                        // Aggiorna il nome della lista con il nome del file
+                        currentListName = fileName;
+                        localStorage.setItem('currentListName', currentListName);
+                        document.getElementById('listTitle').textContent = currentListName;
+                        
                         markAsChanged();
                         saveSubscriptions();
                         
@@ -1582,5 +1670,5 @@
         setView('subscriptions'); // Inizia con la vista abbonamenti
         updateStats();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9993a69d354f0f35',t:'MTc2MjI1NDQ3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c5eba41622ee6e',t:'MTc2Mjc4MTU5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
