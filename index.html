@@ -68,7 +68,25 @@
    <div class="mb-4"><button onclick="toggleNewSubscriptionForm()" id="newSubscriptionBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg"> ➕ Nuovo Abbonamento </button>
    </div><!-- Pulsanti Nuovo, Salva, Apri, Google Sheets -->
    <div class="mb-8 grid grid-cols-4 gap-2"><button onclick="showNewListPopup()" class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium"> 📄 Nuovo </button> <button onclick="exportToCSV()" class="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm font-medium"> 💾 Salva </button> <button onclick="document.getElementById('importFile').click()" class="px-3 py-2 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors text-sm font-medium"> 📂 Apri </button> <button onclick="exportToGoogleSheets()" class="px-3 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors text-sm font-medium"> 📋 Google Sheets </button> <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
-   </div><!-- Form per nuovo abbonamento (nascosto di default) -->
+   </div><!-- Pulsante Costi Mensili -->
+   <div class="mb-8"><button onclick="showMonthlyCostsPopup()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-lg flex items-center justify-center gap-2"> 💰 Gestione Costi Mensili <span class="text-sm font-normal opacity-90" id="costsButtonLabel"></span> </button>
+   </div>
+   <script>
+            // Inizializza l'etichetta dei costi
+            function initCostsButtonLabel() {
+                const span = document.getElementById('costsButtonLabel');
+                if (span) {
+                    const roomText = monthlyCosts.roomRentType === 'euro' ? 
+                        `€${monthlyCosts.roomRent.toFixed(0)}` : 
+                        `${monthlyCosts.roomRent}%`;
+                    const teacherText = monthlyCosts.teacherFeeType === 'euro' ? 
+                        `€${monthlyCosts.teacherFee.toFixed(0)}` : 
+                        `${monthlyCosts.teacherFee}%`;
+                    span.textContent = `(Affitto: ${roomText} • Maestro: ${teacherText})`;
+                }
+            }
+            initCostsButtonLabel();
+        </script><!-- Form per nuovo abbonamento (nascosto di default) -->
    <div id="newSubscriptionForm" class="bg-white rounded-xl shadow-lg p-6 mb-8 hidden">
     <div class="flex items-center justify-between mb-6">
      <h2 class="text-2xl font-semibold text-gray-800">Nuovo Abbonamento</h2><button onclick="toggleNewSubscriptionForm()" class="text-gray-500 hover:text-gray-700 transition-colors">
@@ -267,6 +285,54 @@
         let currentFilter = 'all';
         let currentView = 'subscriptions';
         let currentListName = localStorage.getItem('currentListName') || 'Lista Abbonamenti';
+        let monthlyCosts = loadMonthlyCosts();
+
+        function loadMonthlyCosts() {
+            try {
+                const saved = localStorage.getItem('monthlyCosts');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                return {
+                    roomRent: 0,
+                    roomRentType: 'euro', // 'euro' o 'percentage'
+                    teacherFee: 0,
+                    teacherFeeType: 'euro' // 'euro' o 'percentage'
+                };
+            } catch (error) {
+                console.error('Errore caricamento costi:', error);
+                return {
+                    roomRent: 0,
+                    roomRentType: 'euro',
+                    teacherFee: 0,
+                    teacherFeeType: 'euro'
+                };
+            }
+        }
+
+        function saveMonthlyCosts() {
+            try {
+                localStorage.setItem('monthlyCosts', JSON.stringify(monthlyCosts));
+            } catch (error) {
+                console.error('Errore salvataggio costi:', error);
+            }
+        }
+
+        function updateCostsButtonLabel() {
+            const costsButton = document.querySelector('button[onclick="showMonthlyCostsPopup()"]');
+            if (costsButton) {
+                const span = costsButton.querySelector('span');
+                if (span) {
+                    const roomText = monthlyCosts.roomRentType === 'euro' ? 
+                        `€${monthlyCosts.roomRent.toFixed(0)}` : 
+                        `${monthlyCosts.roomRent}%`;
+                    const teacherText = monthlyCosts.teacherFeeType === 'euro' ? 
+                        `€${monthlyCosts.teacherFee.toFixed(0)}` : 
+                        `${monthlyCosts.teacherFee}%`;
+                    span.textContent = `(Affitto: ${roomText} • Maestro: ${teacherText})`;
+                }
+            }
+        }
 
         function loadSubscriptions() {
             try {
@@ -306,6 +372,210 @@
 
         // Aggiorna il titolo della lista all'avvio
         document.getElementById('listTitle').textContent = currentListName;
+
+        function showMonthlyCostsPopup() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">💰 Costi Mensili</h2>
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-6 text-sm">
+                        Questi costi vengono sottratti automaticamente dai ricavi mensili nel riepilogo dettagliato.
+                    </p>
+                    
+                    <form id="costsForm" class="space-y-6">
+                        <!-- Affitto Sala -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                🏢 Affitto Sala
+                            </label>
+                            
+                            <div class="flex gap-2 mb-3">
+                                <button type="button" onclick="setCostType('room', 'euro')" 
+                                        id="roomTypeEuro"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.roomRentType === 'euro' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    € Euro
+                                </button>
+                                <button type="button" onclick="setCostType('room', 'percentage')" 
+                                        id="roomTypePercentage"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.roomRentType === 'percentage' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    % Percentuale
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="roomRent" step="0.01" min="0" 
+                                       value="${monthlyCosts.roomRent}"
+                                       placeholder="${monthlyCosts.roomRentType === 'percentage' ? 'Es: 30' : 'Es: 300'}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg">
+                                <span class="text-2xl font-bold text-gray-600" id="roomSymbol">${monthlyCosts.roomRentType === 'percentage' ? '%' : '€'}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Compenso Maestro -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                👨‍🏫 Compenso Maestro
+                            </label>
+                            
+                            <div class="flex gap-2 mb-3">
+                                <button type="button" onclick="setCostType('teacher', 'euro')" 
+                                        id="teacherTypeEuro"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.teacherFeeType === 'euro' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    € Euro
+                                </button>
+                                <button type="button" onclick="setCostType('teacher', 'percentage')" 
+                                        id="teacherTypePercentage"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.teacherFeeType === 'percentage' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    % Percentuale
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="teacherFee" step="0.01" min="0" 
+                                       value="${monthlyCosts.teacherFee}"
+                                       placeholder="${monthlyCosts.teacherFeeType === 'percentage' ? 'Es: 40' : 'Es: 400'}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg">
+                                <span class="text-2xl font-bold text-gray-600" id="teacherSymbol">${monthlyCosts.teacherFeeType === 'percentage' ? '%' : '€'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600 mb-2">
+                                <span class="font-medium">Configurazione Attuale:</span>
+                            </div>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div id="roomCostPreview">
+                                    • Affitto: ${monthlyCosts.roomRent}${monthlyCosts.roomRentType === 'percentage' ? '% dell\'incasso' : '€ fissi'}
+                                </div>
+                                <div id="teacherCostPreview">
+                                    • Maestro: ${monthlyCosts.teacherFee}${monthlyCosts.teacherFeeType === 'percentage' ? '% dell\'incasso' : '€ fissi'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" 
+                                    class="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200">
+                                Salva Costi
+                            </button>
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                Annulla
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Variabili di stato per i tipi
+            let currentRoomType = monthlyCosts.roomRentType;
+            let currentTeacherType = monthlyCosts.teacherFeeType;
+            
+            // Update preview in real-time
+            const roomRentInput = modal.querySelector('#roomRent');
+            const teacherFeeInput = modal.querySelector('#teacherFee');
+            
+            function updatePreview() {
+                const room = parseFloat(roomRentInput.value) || 0;
+                const teacher = parseFloat(teacherFeeInput.value) || 0;
+                
+                const roomPreview = modal.querySelector('#roomCostPreview');
+                const teacherPreview = modal.querySelector('#teacherCostPreview');
+                
+                roomPreview.textContent = `• Affitto: ${room}${currentRoomType === 'percentage' ? '% dell\'incasso' : '€ fissi'}`;
+                teacherPreview.textContent = `• Maestro: ${teacher}${currentTeacherType === 'percentage' ? '% dell\'incasso' : '€ fissi'}`;
+            }
+            
+            // Funzione globale per cambiare tipo di costo
+            window.setCostType = function(costType, valueType) {
+                if (costType === 'room') {
+                    currentRoomType = valueType;
+                    const euroBtn = modal.querySelector('#roomTypeEuro');
+                    const percentageBtn = modal.querySelector('#roomTypePercentage');
+                    const symbol = modal.querySelector('#roomSymbol');
+                    const input = modal.querySelector('#roomRent');
+                    
+                    if (valueType === 'euro') {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        symbol.textContent = '€';
+                        input.placeholder = 'Es: 300';
+                    } else {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        symbol.textContent = '%';
+                        input.placeholder = 'Es: 30';
+                    }
+                } else if (costType === 'teacher') {
+                    currentTeacherType = valueType;
+                    const euroBtn = modal.querySelector('#teacherTypeEuro');
+                    const percentageBtn = modal.querySelector('#teacherTypePercentage');
+                    const symbol = modal.querySelector('#teacherSymbol');
+                    const input = modal.querySelector('#teacherFee');
+                    
+                    if (valueType === 'euro') {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        symbol.textContent = '€';
+                        input.placeholder = 'Es: 400';
+                    } else {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        symbol.textContent = '%';
+                        input.placeholder = 'Es: 40';
+                    }
+                }
+                
+                updatePreview();
+            };
+            
+            roomRentInput.addEventListener('input', updatePreview);
+            teacherFeeInput.addEventListener('input', updatePreview);
+            
+            // Focus sul primo campo
+            setTimeout(() => {
+                roomRentInput.focus();
+                roomRentInput.select();
+            }, 100);
+            
+            // Gestione submit form
+            modal.querySelector('#costsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                monthlyCosts.roomRent = parseFloat(roomRentInput.value) || 0;
+                monthlyCosts.roomRentType = currentRoomType;
+                monthlyCosts.teacherFee = parseFloat(teacherFeeInput.value) || 0;
+                monthlyCosts.teacherFeeType = currentTeacherType;
+                
+                saveMonthlyCosts();
+                updateStats();
+                
+                // Aggiorna il pulsante con i nuovi valori
+                updateCostsButtonLabel();
+                
+                modal.remove();
+                showNotification('Costi mensili aggiornati!', 'success');
+            });
+            
+            // Chiudi modal cliccando fuori
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
 
         function showNewListPopup() {
             const modal = document.createElement('div');
@@ -1242,16 +1512,75 @@
 
             breakdownContainer.innerHTML = sortedMonths.map(monthKey => {
                 const data = monthlyData[monthKey];
+                const grossRevenue = data.revenue;
+                
+                // Calcola i costi in base al tipo (euro o percentuale)
+                let roomCost = 0;
+                let teacherCost = 0;
+                
+                if (monthlyCosts.roomRentType === 'euro') {
+                    roomCost = monthlyCosts.roomRent;
+                } else {
+                    roomCost = (grossRevenue * monthlyCosts.roomRent) / 100;
+                }
+                
+                if (monthlyCosts.teacherFeeType === 'euro') {
+                    teacherCost = monthlyCosts.teacherFee;
+                } else {
+                    teacherCost = (grossRevenue * monthlyCosts.teacherFee) / 100;
+                }
+                
+                const totalCosts = roomCost + teacherCost;
+                const netRevenue = grossRevenue - totalCosts;
+                const profitMargin = grossRevenue > 0 ? ((netRevenue / grossRevenue) * 100) : 0;
+                
                 const countText = data.count % 1 === 0 ? 
                     `${data.count} abbonamenti` : 
                     `${data.count} abbonamenti (inclusi bimestrali)`;
+                
+                const netClass = netRevenue >= 0 ? 'text-green-600' : 'text-red-600';
+                const profitClass = profitMargin >= 0 ? 'text-green-600' : 'text-red-600';
+                
+                // Formatta la visualizzazione dei costi
+                const roomCostDisplay = monthlyCosts.roomRentType === 'euro' ? 
+                    `€${roomCost.toFixed(2)}` : 
+                    `€${roomCost.toFixed(2)} (${monthlyCosts.roomRent}%)`;
+                    
+                const teacherCostDisplay = monthlyCosts.teacherFeeType === 'euro' ? 
+                    `€${teacherCost.toFixed(2)}` : 
+                    `€${teacherCost.toFixed(2)} (${monthlyCosts.teacherFee}%)`;
+                
                 return `
-                    <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                        <div>
-                            <span class="font-medium text-gray-700">${data.name}</span>
-                            <span class="text-sm text-gray-500 ml-2">(${countText})</span>
+                    <div class="py-3 border-b border-gray-200 last:border-b-0">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <span class="font-semibold text-gray-800">${data.name}</span>
+                                <span class="text-sm text-gray-500 ml-2">(${countText})</span>
+                            </div>
                         </div>
-                        <span class="font-semibold text-gray-800">€${data.revenue.toFixed(2)}</span>
+                        <div class="grid grid-cols-2 gap-3 text-sm pl-4">
+                            <div>
+                                <span class="text-gray-600">Ricavi Lordi:</span>
+                                <span class="font-semibold text-blue-600 ml-2">€${grossRevenue.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Costi Totali:</span>
+                                <span class="font-semibold text-red-600 ml-2">-€${totalCosts.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">• Affitto Sala:</span>
+                                <span class="text-gray-700 ml-2">${roomCostDisplay}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">• Maestro:</span>
+                                <span class="text-gray-700 ml-2">${teacherCostDisplay}</span>
+                            </div>
+                            <div class="col-span-2 pt-2 border-t border-gray-200">
+                                <span class="text-gray-600 font-medium">Ricavo Netto:</span>
+                                <span class="font-bold ${netClass} ml-2 text-lg">€${netRevenue.toFixed(2)}</span>
+                                <span class="text-xs ${profitClass} ml-2">(${profitMargin >= 0 ? '+' : ''}${profitMargin.toFixed(1)}%)</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1670,5 +1999,5 @@
         setView('subscriptions'); // Inizia con la vista abbonamenti
         updateStats();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c5eba41622ee6e',t:'MTc2Mjc4MTU5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bd49c65b53d0e4a',t:'MTc2ODMwNDM0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
