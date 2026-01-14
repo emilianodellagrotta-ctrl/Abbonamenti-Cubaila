@@ -1,4 +1,4 @@
-<!doctype html> 
+<!doctype html>
 <html lang="it">
  <head>
   <meta charset="UTF-8">
@@ -101,6 +101,12 @@
       </div>
      </div>
      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div><label for="courseName" class="block text-sm font-medium text-gray-700 mb-2">Corso (opzionale)</label> <input list="courseList" id="courseName" placeholder="Es: Salsa, Afro, Son..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <datalist id="courseList"> <!-- I corsi salvati verranno inseriti qui --> </datalist>
+       <p class="text-xs text-gray-500 mt-1">Lascia vuoto per corso generico</p>
+      </div>
+      <div></div>
+     </div>
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div><label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">Data Inizio</label> <input type="date" id="startDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base">
       </div>
       <div id="priceContainer"><label for="price" class="block text-sm font-medium text-gray-700 mb-2">Prezzo (€)</label> <input type="number" id="price" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base">
@@ -114,12 +120,15 @@
     <div class="mb-6">
      <h2 id="listTitle" class="text-2xl font-semibold text-gray-800 mb-4">Lista Abbonamenti</h2><!-- Toggle Vista -->
      <div class="flex gap-2 mb-4"><button onclick="setView('subscriptions')" id="viewSubscriptions" class="view-btn flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg transition-colors font-medium"> 📋 Vista Abbonamenti </button> <button onclick="setView('students')" id="viewStudents" class="view-btn flex-1 px-4 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg transition-colors font-medium"> 👥 Vista Allievi </button>
-     </div><!-- Toggle Filtri (solo per vista abbonamenti) -->
+     </div><!-- Toggle Filtri (visibile in entrambe le viste) -->
      <div id="filtersSection"><button onclick="toggleFilters()" class="filters-toggle w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mb-4"> <span class="font-medium text-gray-700">🔍 Filtri</span>
        <svg id="filtersArrow" class="w-5 h-5 text-gray-500 transition-transform duration-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
        </svg></button>
      </div><!-- Contenuto Filtri (nascosto di default) -->
-     <div id="filtersContent" class="filters-content hidden"><!-- Filtri per Stato -->
+     <div id="filtersContent" class="filters-content hidden"><!-- Filtri per Corso -->
+      <div class="mb-3">
+       <h3 class="text-sm font-medium text-gray-600 mb-2">Filtri per Corso</h3><select id="courseFilter" onchange="applyCourseFilter()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"> <option value="all">Tutti i Corsi</option> </select>
+      </div><!-- Filtri per Stato -->
       <div class="mb-3">
        <h3 class="text-sm font-medium text-gray-600 mb-2">Filtri per Stato</h3>
        <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2"><button onclick="filterSubscriptions('all')" class="filter-btn px-3 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors active text-sm"> Tutti (<span id="count-all">0</span>) </button> <button onclick="filterSubscriptions('active')" class="filter-btn px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm"> Attivi (<span id="count-active">0</span>) </button> <button onclick="filterSubscriptions('expiring')" class="filter-btn px-3 py-2 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors text-sm"> In Scadenza (<span id="count-expiring">0</span>) </button> <button onclick="filterSubscriptions('expired')" class="filter-btn px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-sm"> Scaduti (<span id="count-expired">0</span>) </button>
@@ -283,9 +292,95 @@
         // Carica i dati con sistema di recupero robusto
         let subscriptions = loadSubscriptions();
         let currentFilter = 'all';
+        let currentCourseFilter = 'all';
         let currentView = 'subscriptions';
         let currentListName = localStorage.getItem('currentListName') || 'Lista Abbonamenti';
         let monthlyCosts = loadMonthlyCosts();
+        let savedCourses = loadCourses();
+
+        function loadCourses() {
+            try {
+                const saved = localStorage.getItem('danceCourses');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                return [];
+            } catch (error) {
+                console.error('Errore caricamento corsi:', error);
+                return [];
+            }
+        }
+
+        function saveCourses() {
+            try {
+                localStorage.setItem('danceCourses', JSON.stringify(savedCourses));
+            } catch (error) {
+                console.error('Errore salvataggio corsi:', error);
+            }
+        }
+
+        function updateCourseList() {
+            const datalist = document.getElementById('courseList');
+            if (datalist) {
+                datalist.innerHTML = savedCourses.map(course => 
+                    `<option value="${course}">`
+                ).join('');
+            }
+            
+            // Aggiorna anche il filtro corsi
+            updateCourseFilter();
+        }
+
+        function updateCourseFilter() {
+            const courseFilter = document.getElementById('courseFilter');
+            if (courseFilter) {
+                // Ottieni tutti i corsi unici dagli abbonamenti
+                const uniqueCourses = [...new Set(subscriptions
+                    .map(sub => sub.course || 'Generico')
+                    .filter(course => course)
+                )].sort();
+                
+                // Salva il valore corrente
+                const currentValue = courseFilter.value;
+                
+                // Ricostruisci le opzioni
+                courseFilter.innerHTML = '<option value="all">Tutti i Corsi</option>' +
+                    uniqueCourses.map(course => 
+                        `<option value="${course}">${course}</option>`
+                    ).join('');
+                
+                // Ripristina il valore se esiste ancora
+                if (uniqueCourses.includes(currentValue) || currentValue === 'all') {
+                    courseFilter.value = currentValue;
+                } else {
+                    courseFilter.value = 'all';
+                    currentCourseFilter = 'all';
+                }
+            }
+        }
+
+        function applyCourseFilter() {
+            const courseFilter = document.getElementById('courseFilter');
+            if (courseFilter) {
+                currentCourseFilter = courseFilter.value;
+                
+                // Aggiorna la vista corrente
+                if (currentView === 'subscriptions') {
+                    renderSubscriptions();
+                } else {
+                    renderStudents();
+                }
+            }
+        }
+
+        function addCourseToMemory(courseName) {
+            const trimmedCourse = courseName.trim();
+            if (trimmedCourse && trimmedCourse.toLowerCase() !== 'generico' && !savedCourses.includes(trimmedCourse)) {
+                savedCourses.push(trimmedCourse);
+                saveCourses();
+                updateCourseList();
+            }
+        }
 
         function loadMonthlyCosts() {
             try {
@@ -684,6 +779,12 @@
             const subscriptionType = document.getElementById('subscriptionType').value;
             const startDate = document.getElementById('startDate').value;
             const price = parseFloat(document.getElementById('price').value);
+            const courseName = document.getElementById('courseName').value.trim() || 'Generico';
+            
+            // Aggiungi il corso alla memoria se è nuovo
+            if (courseName.toLowerCase() !== 'generico') {
+                addCourseToMemory(courseName);
+            }
             
             const subscription = {
                 id: Date.now(),
@@ -691,6 +792,7 @@
                 type: subscriptionType,
                 startDate: startDate,
                 price: price,
+                course: courseName,
                 lessonsUsed: 0,
                 createdAt: new Date().toISOString()
             };
@@ -785,7 +887,6 @@
                 
                 document.getElementById('subscriptionsList').classList.remove('hidden');
                 document.getElementById('studentsList').classList.add('hidden');
-                document.getElementById('filtersSection').classList.remove('hidden');
                 
                 renderSubscriptions();
             } else if (view === 'students') {
@@ -794,7 +895,6 @@
                 
                 document.getElementById('subscriptionsList').classList.add('hidden');
                 document.getElementById('studentsList').classList.remove('hidden');
-                document.getElementById('filtersSection').classList.add('hidden');
                 
                 renderStudents();
             }
@@ -825,10 +925,18 @@
 
             emptyMessage.style.display = 'none';
             
+            // Applica filtro corso
+            let filteredSubscriptions = subscriptions;
+            if (currentCourseFilter !== 'all') {
+                filteredSubscriptions = subscriptions.filter(sub => 
+                    (sub.course || 'Generico') === currentCourseFilter
+                );
+            }
+            
             // Raggruppa abbonamenti per allievo
             const studentData = {};
             
-            subscriptions.forEach(sub => {
+            filteredSubscriptions.forEach(sub => {
                 if (!studentData[sub.studentName]) {
                     studentData[sub.studentName] = [];
                 }
@@ -837,6 +945,11 @@
 
             // Ordina allievi alfabeticamente
             const sortedStudents = Object.keys(studentData).sort();
+            
+            if (sortedStudents.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 bg-white rounded-xl shadow-lg"><h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun allievo trovato</h3><p class="text-gray-500">Prova a cambiare i filtri</p></div>';
+                return;
+            }
             
             container.innerHTML = sortedStudents.map(studentName => {
                 const studentSubscriptions = studentData[studentName];
@@ -917,7 +1030,7 @@
                                     <span class="font-medium">Prezzo:</span> €${currentSubscription.price.toFixed(2)}
                                 </div>
                                 <div>
-                                    <span class="font-medium">Inizio:</span> ${startDate}
+                                    <span class="font-medium">Corso:</span> <span class="text-purple-600">${currentSubscription.course || 'Generico'}</span>
                                 </div>
                                 <div>
                                     <span class="font-medium">Scadenza:</span> ${expiryDate}
@@ -978,21 +1091,30 @@
             const emptyMessage = document.getElementById('emptyMessage');
             
             let filteredSubscriptions = subscriptions;
+            
+            // Applica filtro per stato
             if (currentFilter !== 'all') {
                 if (currentFilter === 'monthly-active') {
-                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active');
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active');
                 } else if (currentFilter === 'bimonthly-active') {
-                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active');
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active');
                 } else if (currentFilter === 'single-active') {
-                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'single');
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => sub.type === 'single');
                 } else {
-                    filteredSubscriptions = subscriptions.filter(sub => getSubscriptionStatus(sub) === currentFilter);
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => getSubscriptionStatus(sub) === currentFilter);
                 }
+            }
+            
+            // Applica filtro per corso
+            if (currentCourseFilter !== 'all') {
+                filteredSubscriptions = filteredSubscriptions.filter(sub => 
+                    (sub.course || 'Generico') === currentCourseFilter
+                );
             }
 
             if (filteredSubscriptions.length === 0) {
-                container.innerHTML = '';
-                emptyMessage.style.display = 'block';
+                container.innerHTML = '<div class="text-center py-12 bg-white rounded-xl shadow-lg"><h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun abbonamento trovato</h3><p class="text-gray-500">Prova a cambiare i filtri</p></div>';
+                emptyMessage.style.display = 'none';
                 return;
             }
 
@@ -1048,6 +1170,7 @@
                             <div>
                                 <h3 class="text-xl font-semibold text-gray-800">${subscription.studentName}</h3>
                                 <p class="text-gray-600">${typeText}</p>
+                                <p class="text-sm text-purple-600 font-medium mt-1">📚 ${subscription.course || 'Generico'}</p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="${statusClass} text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -1149,7 +1272,10 @@
                 return `
                     <div class="border-l-4 ${status === 'active' ? 'border-green-500' : status === 'expiring' ? 'border-yellow-500' : 'border-red-500'} pl-4 py-3 mb-4 bg-gray-50 rounded-r-lg">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="font-medium text-gray-800">${typeText}${lessonInfo}</span>
+                            <div>
+                                <span class="font-medium text-gray-800">${typeText}${lessonInfo}</span>
+                                <span class="text-xs text-purple-600 ml-2">📚 ${sub.course || 'Generico'}</span>
+                            </div>
                             <span class="${statusClass} text-white px-2 py-1 rounded text-xs font-medium">
                                 ${statusText}
                             </span>
@@ -1427,6 +1553,9 @@
             // Aggiorna breakdown mensile e lezioni
             updateMonthlyBreakdown();
             updateStudentLessonsBreakdown();
+            
+            // Aggiorna il filtro corsi
+            updateCourseFilter();
         }
 
         function updateMonthlyBreakdown() {
@@ -1687,7 +1816,8 @@
                 'Lezioni Usate',
                 'Lezioni Totali',
                 'Stato',
-                'Data Creazione'
+                'Data Creazione',
+                'Corso'
             ];
 
             const csvData = subscriptions.map(sub => {
@@ -1710,7 +1840,8 @@
                     sub.lessonsUsed || 0,
                     sub.totalLessons || 'N/A',
                     statusText,
-                    new Date(sub.createdAt).toLocaleDateString('it-IT')
+                    new Date(sub.createdAt).toLocaleDateString('it-IT'),
+                    sub.course || 'Generico'
                 ];
             });
 
@@ -1780,7 +1911,8 @@
                 'Lezioni Usate',
                 'Lezioni Totali',
                 'Stato',
-                'Data Creazione'
+                'Data Creazione',
+                'Corso'
             ];
 
             const sheetData = subscriptions.map(sub => {
@@ -1803,7 +1935,8 @@
                     sub.lessonsUsed || 0,
                     sub.totalLessons || 'N/A',
                     statusText,
-                    new Date(sub.createdAt).toLocaleDateString('it-IT')
+                    new Date(sub.createdAt).toLocaleDateString('it-IT'),
+                    sub.course || 'Generico'
                 ];
             });
 
@@ -1861,7 +1994,7 @@
                     dataLines.forEach(line => {
                         const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
                         
-                        if (fields.length >= 6) {
+                        if (fields.length >= 7) {
                             const studentName = fields[0];
                             const typeText = fields[1];
                             const type = typeText === 'Mensile' ? 'monthly' : 
@@ -1871,6 +2004,13 @@
                             const price = parseFloat(fields[4]);
                             const lessonsUsed = parseInt(fields[5]) || 0;
                             const totalLessons = fields[6] === 'N/A' ? null : parseInt(fields[6]);
+                            // Il campo Corso è ora all'ultima posizione (indice 9)
+                            const course = fields[9] ? fields[9] : 'Generico';
+
+                            // Aggiungi il corso alla memoria se è nuovo
+                            if (course && course.toLowerCase() !== 'generico') {
+                                addCourseToMemory(course);
+                            }
 
                             // Controlla se l'abbonamento esiste già
                             const exists = subscriptions.some(sub => 
@@ -1884,6 +2024,7 @@
                                     id: Date.now() + Math.random(),
                                     studentName: studentName,
                                     type: type,
+                                    course: course,
                                     startDate: startDate,
                                     expiryDate: expiryDate,
                                     price: price,
@@ -1996,8 +2137,9 @@
 
         // Inizializza l'app
         checkStorageStatus();
+        updateCourseList(); // Carica i corsi salvati nel datalist
         setView('subscriptions'); // Inizia con la vista abbonamenti
         updateStats();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bd49c65b53d0e4a',t:'MTc2ODMwNDM0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bde369c2133edbc',t:'MTc2ODQwNTAzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
