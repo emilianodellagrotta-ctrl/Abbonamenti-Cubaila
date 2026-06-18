@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="it">
- <head>
+ <head><script src="/_sdk/telemetry_sdk.js"></script>
   <meta charset="UTF-8">
   <link rel="manifest" href="manifest.json">
   <script>
@@ -56,7 +56,8 @@
             transform: rotate(180deg);
         }
     </style>
-  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
  </head>
@@ -68,7 +69,25 @@
    <div class="mb-4"><button onclick="toggleNewSubscriptionForm()" id="newSubscriptionBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg"> ➕ Nuovo Abbonamento </button>
    </div><!-- Pulsanti Nuovo, Salva, Apri, Google Sheets -->
    <div class="mb-8 grid grid-cols-4 gap-2"><button onclick="showNewListPopup()" class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium"> 📄 Nuovo </button> <button onclick="exportToCSV()" class="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm font-medium"> 💾 Salva </button> <button onclick="document.getElementById('importFile').click()" class="px-3 py-2 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors text-sm font-medium"> 📂 Apri </button> <button onclick="exportToGoogleSheets()" class="px-3 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors text-sm font-medium"> 📋 Google Sheets </button> <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
-   </div><!-- Form per nuovo abbonamento (nascosto di default) -->
+   </div><!-- Pulsante Costi Mensili -->
+   <div class="mb-8"><button onclick="showMonthlyCostsPopup()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-lg flex items-center justify-center gap-2"> 💰 Gestione Costi Mensili <span class="text-sm font-normal opacity-90" id="costsButtonLabel"></span> </button>
+   </div>
+   <script>
+            // Inizializza l'etichetta dei costi
+            function initCostsButtonLabel() {
+                const span = document.getElementById('costsButtonLabel');
+                if (span) {
+                    const roomText = monthlyCosts.roomRentType === 'euro' ? 
+                        `€${monthlyCosts.roomRent.toFixed(0)}` : 
+                        `${monthlyCosts.roomRent}%`;
+                    const teacherText = monthlyCosts.teacherFeeType === 'euro' ? 
+                        `€${monthlyCosts.teacherFee.toFixed(0)}` : 
+                        `${monthlyCosts.teacherFee}%`;
+                    span.textContent = `(Affitto: ${roomText} • Maestro: ${teacherText})`;
+                }
+            }
+            initCostsButtonLabel();
+        </script><!-- Form per nuovo abbonamento (nascosto di default) -->
    <div id="newSubscriptionForm" class="bg-white rounded-xl shadow-lg p-6 mb-8 hidden">
     <div class="flex items-center justify-between mb-6">
      <h2 class="text-2xl font-semibold text-gray-800">Nuovo Abbonamento</h2><button onclick="toggleNewSubscriptionForm()" class="text-gray-500 hover:text-gray-700 transition-colors">
@@ -79,7 +98,25 @@
      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div><label for="studentName" class="block text-sm font-medium text-gray-700 mb-2">Nome Allievo</label> <input type="text" id="studentName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
       </div>
-      <div><label for="subscriptionType" class="block text-sm font-medium text-gray-700 mb-2">Tipo Abbonamento</label> <select id="subscriptionType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <option value="">Seleziona tipo</option> <option value="monthly">Mensile</option> <option value="bimonthly">Bimestrale (6 lezioni)</option> <option value="single">Lezione Singola</option> </select>
+      <div><label for="subscriptionType" class="block text-sm font-medium text-gray-700 mb-2">Tipo Abbonamento</label> <select id="subscriptionType" required onchange="updateSubscriptionFormFields()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <option value="">Seleziona tipo</option> <option value="monthly">Mensile</option> <option value="package">Pacchetto</option> <option value="single">Lezione Singola</option> </select>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div><label for="courseName" class="block text-sm font-medium text-gray-700 mb-2">Corso (opzionale)</label> <input list="courseList" id="courseName" placeholder="Es: Salsa, Afro, Son..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <datalist id="courseList"> <!-- I corsi salvati verranno inseriti qui --> </datalist>
+       <p class="text-xs text-gray-500 mt-1">Lascia vuoto per corso generico</p>
+      </div>
+      <div></div>
+     </div><!-- Campi Pacchetto (visibili solo quando selezionato Pacchetto) -->
+     <div id="packageFields" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+      <div><label for="packageMonths" class="block text-sm font-medium text-gray-700 mb-2">Durata Pacchetto (mesi)</label> <select id="packageMonths" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <option value="">Seleziona durata</option> <option value="1">1 mese</option> <option value="2">2 mesi</option> <option value="3">3 mesi</option> <option value="4">4 mesi</option> <option value="5">5 mesi</option> <option value="6">6 mesi</option> <option value="7">7 mesi</option> <option value="8">8 mesi</option> <option value="9">9 mesi</option> <option value="10">10 mesi</option> <option value="11">11 mesi</option> <option value="12">12 mesi</option> </select>
+      </div>
+      <div><label for="packageLessonsMode" class="block text-sm font-medium text-gray-700 mb-2">Tipo Pacchetto</label> <select id="packageLessonsMode" onchange="updatePackageLessonsField()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <option value="">Seleziona tipo</option> <option value="full">Illimitato (Full)</option> <option value="limited">Lezioni Limitate</option> <option value="monthly">Mensile Ricorrente</option> </select>
+      </div>
+      <div id="packageLessonsContainer" class="hidden"><label for="packageLessons" class="block text-sm font-medium text-gray-700 mb-2">Numero Lezioni</label> <select id="packageLessons" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <option value="">Seleziona numero lezioni</option> <option value="1">1 lezione</option> <option value="2">2 lezioni</option> <option value="3">3 lezioni</option> <option value="4">4 lezioni</option> <option value="5">5 lezioni</option> <option value="6">6 lezioni</option> <option value="7">7 lezioni</option> <option value="8">8 lezioni</option> <option value="9">9 lezioni</option> <option value="10">10 lezioni</option> <option value="11">11 lezioni</option> <option value="12">12 lezioni</option> </select>
+       <p class="text-xs text-gray-500 mt-1">Lezioni totali nel pacchetto</p>
+      </div>
+      <div id="packageMonthlyLessonsContainer" class="hidden"><label for="packageMonthlyLessons" class="block text-sm font-medium text-gray-700 mb-2">Lezioni Mensili</label> <select id="packageMonthlyLessons" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"> <option value="">Seleziona lezioni mensili</option> <option value="1">1 lezione</option> <option value="2">2 lezioni</option> <option value="3">3 lezioni</option> <option value="4">4 lezioni</option> <option value="5">5 lezioni</option> <option value="6">6 lezioni</option> <option value="7">7 lezioni</option> <option value="8">8 lezioni</option> <option value="9">9 lezioni</option> <option value="10">10 lezioni</option> <option value="11">11 lezioni</option> <option value="12">12 lezioni</option> </select>
+       <p class="text-xs text-gray-500 mt-1">Si rinnova ogni mese</p>
       </div>
      </div>
      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -96,12 +133,15 @@
     <div class="mb-6">
      <h2 id="listTitle" class="text-2xl font-semibold text-gray-800 mb-4">Lista Abbonamenti</h2><!-- Toggle Vista -->
      <div class="flex gap-2 mb-4"><button onclick="setView('subscriptions')" id="viewSubscriptions" class="view-btn flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg transition-colors font-medium"> 📋 Vista Abbonamenti </button> <button onclick="setView('students')" id="viewStudents" class="view-btn flex-1 px-4 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg transition-colors font-medium"> 👥 Vista Allievi </button>
-     </div><!-- Toggle Filtri (solo per vista abbonamenti) -->
+     </div><!-- Toggle Filtri (visibile in entrambe le viste) -->
      <div id="filtersSection"><button onclick="toggleFilters()" class="filters-toggle w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mb-4"> <span class="font-medium text-gray-700">🔍 Filtri</span>
        <svg id="filtersArrow" class="w-5 h-5 text-gray-500 transition-transform duration-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
        </svg></button>
      </div><!-- Contenuto Filtri (nascosto di default) -->
-     <div id="filtersContent" class="filters-content hidden"><!-- Filtri per Stato -->
+     <div id="filtersContent" class="filters-content hidden"><!-- Filtri per Corso -->
+      <div class="mb-3">
+       <h3 class="text-sm font-medium text-gray-600 mb-2">Filtri per Corso</h3><select id="courseFilter" onchange="applyCourseFilter()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"> <option value="all">Tutti i Corsi</option> </select>
+      </div><!-- Filtri per Stato -->
       <div class="mb-3">
        <h3 class="text-sm font-medium text-gray-600 mb-2">Filtri per Stato</h3>
        <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2"><button onclick="filterSubscriptions('all')" class="filter-btn px-3 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors active text-sm"> Tutti (<span id="count-all">0</span>) </button> <button onclick="filterSubscriptions('active')" class="filter-btn px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm"> Attivi (<span id="count-active">0</span>) </button> <button onclick="filterSubscriptions('expiring')" class="filter-btn px-3 py-2 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors text-sm"> In Scadenza (<span id="count-expiring">0</span>) </button> <button onclick="filterSubscriptions('expired')" class="filter-btn px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-sm"> Scaduti (<span id="count-expired">0</span>) </button>
@@ -265,8 +305,142 @@
         // Carica i dati con sistema di recupero robusto
         let subscriptions = loadSubscriptions();
         let currentFilter = 'all';
+        let currentCourseFilter = 'all';
         let currentView = 'subscriptions';
         let currentListName = localStorage.getItem('currentListName') || 'Lista Abbonamenti';
+        let monthlyCosts = loadMonthlyCosts();
+        let savedCourses = loadCourses();
+
+        function loadCourses() {
+            try {
+                const saved = localStorage.getItem('danceCourses');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                return [];
+            } catch (error) {
+                console.error('Errore caricamento corsi:', error);
+                return [];
+            }
+        }
+
+        function saveCourses() {
+            try {
+                localStorage.setItem('danceCourses', JSON.stringify(savedCourses));
+            } catch (error) {
+                console.error('Errore salvataggio corsi:', error);
+            }
+        }
+
+        function updateCourseList() {
+            const datalist = document.getElementById('courseList');
+            if (datalist) {
+                datalist.innerHTML = savedCourses.map(course => 
+                    `<option value="${course}">`
+                ).join('');
+            }
+            
+            // Aggiorna anche il filtro corsi
+            updateCourseFilter();
+        }
+
+        function updateCourseFilter() {
+            const courseFilter = document.getElementById('courseFilter');
+            if (courseFilter) {
+                // Ottieni tutti i corsi unici dagli abbonamenti
+                const uniqueCourses = [...new Set(subscriptions
+                    .map(sub => sub.course || 'Generico')
+                    .filter(course => course)
+                )].sort();
+                
+                // Salva il valore corrente
+                const currentValue = courseFilter.value;
+                
+                // Ricostruisci le opzioni
+                courseFilter.innerHTML = '<option value="all">Tutti i Corsi</option>' +
+                    uniqueCourses.map(course => 
+                        `<option value="${course}">${course}</option>`
+                    ).join('');
+                
+                // Ripristina il valore se esiste ancora
+                if (uniqueCourses.includes(currentValue) || currentValue === 'all') {
+                    courseFilter.value = currentValue;
+                } else {
+                    courseFilter.value = 'all';
+                    currentCourseFilter = 'all';
+                }
+            }
+        }
+
+        function applyCourseFilter() {
+            const courseFilter = document.getElementById('courseFilter');
+            if (courseFilter) {
+                currentCourseFilter = courseFilter.value;
+                
+                // Aggiorna la vista corrente
+                if (currentView === 'subscriptions') {
+                    renderSubscriptions();
+                } else {
+                    renderStudents();
+                }
+            }
+        }
+
+        function addCourseToMemory(courseName) {
+            const trimmedCourse = courseName.trim();
+            if (trimmedCourse && trimmedCourse.toLowerCase() !== 'generico' && !savedCourses.includes(trimmedCourse)) {
+                savedCourses.push(trimmedCourse);
+                saveCourses();
+                updateCourseList();
+            }
+        }
+
+        function loadMonthlyCosts() {
+            try {
+                const saved = localStorage.getItem('monthlyCosts');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                return {
+                    roomRent: 0,
+                    roomRentType: 'euro', // 'euro' o 'percentage'
+                    teacherFee: 0,
+                    teacherFeeType: 'euro' // 'euro' o 'percentage'
+                };
+            } catch (error) {
+                console.error('Errore caricamento costi:', error);
+                return {
+                    roomRent: 0,
+                    roomRentType: 'euro',
+                    teacherFee: 0,
+                    teacherFeeType: 'euro'
+                };
+            }
+        }
+
+        function saveMonthlyCosts() {
+            try {
+                localStorage.setItem('monthlyCosts', JSON.stringify(monthlyCosts));
+            } catch (error) {
+                console.error('Errore salvataggio costi:', error);
+            }
+        }
+
+        function updateCostsButtonLabel() {
+            const costsButton = document.querySelector('button[onclick="showMonthlyCostsPopup()"]');
+            if (costsButton) {
+                const span = costsButton.querySelector('span');
+                if (span) {
+                    const roomText = monthlyCosts.roomRentType === 'euro' ? 
+                        `€${monthlyCosts.roomRent.toFixed(0)}` : 
+                        `${monthlyCosts.roomRent}%`;
+                    const teacherText = monthlyCosts.teacherFeeType === 'euro' ? 
+                        `€${monthlyCosts.teacherFee.toFixed(0)}` : 
+                        `${monthlyCosts.teacherFee}%`;
+                    span.textContent = `(Affitto: ${roomText} • Maestro: ${teacherText})`;
+                }
+            }
+        }
 
         function loadSubscriptions() {
             try {
@@ -306,6 +480,210 @@
 
         // Aggiorna il titolo della lista all'avvio
         document.getElementById('listTitle').textContent = currentListName;
+
+        function showMonthlyCostsPopup() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">💰 Costi Mensili</h2>
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-6 text-sm">
+                        Questi costi vengono sottratti automaticamente dai ricavi mensili nel riepilogo dettagliato.
+                    </p>
+                    
+                    <form id="costsForm" class="space-y-6">
+                        <!-- Affitto Sala -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                🏢 Affitto Sala
+                            </label>
+                            
+                            <div class="flex gap-2 mb-3">
+                                <button type="button" onclick="setCostType('room', 'euro')" 
+                                        id="roomTypeEuro"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.roomRentType === 'euro' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    € Euro
+                                </button>
+                                <button type="button" onclick="setCostType('room', 'percentage')" 
+                                        id="roomTypePercentage"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.roomRentType === 'percentage' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    % Percentuale
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="roomRent" step="0.01" min="0" 
+                                       value="${monthlyCosts.roomRent}"
+                                       placeholder="${monthlyCosts.roomRentType === 'percentage' ? 'Es: 30' : 'Es: 300'}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg">
+                                <span class="text-2xl font-bold text-gray-600" id="roomSymbol">${monthlyCosts.roomRentType === 'percentage' ? '%' : '€'}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Compenso Maestro -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                👨‍🏫 Compenso Maestro
+                            </label>
+                            
+                            <div class="flex gap-2 mb-3">
+                                <button type="button" onclick="setCostType('teacher', 'euro')" 
+                                        id="teacherTypeEuro"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.teacherFeeType === 'euro' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    € Euro
+                                </button>
+                                <button type="button" onclick="setCostType('teacher', 'percentage')" 
+                                        id="teacherTypePercentage"
+                                        class="flex-1 px-3 py-2 rounded-lg ${monthlyCosts.teacherFeeType === 'percentage' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700'} transition-colors text-sm font-medium">
+                                    % Percentuale
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="teacherFee" step="0.01" min="0" 
+                                       value="${monthlyCosts.teacherFee}"
+                                       placeholder="${monthlyCosts.teacherFeeType === 'percentage' ? 'Es: 40' : 'Es: 400'}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg">
+                                <span class="text-2xl font-bold text-gray-600" id="teacherSymbol">${monthlyCosts.teacherFeeType === 'percentage' ? '%' : '€'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600 mb-2">
+                                <span class="font-medium">Configurazione Attuale:</span>
+                            </div>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div id="roomCostPreview">
+                                    • Affitto: ${monthlyCosts.roomRent}${monthlyCosts.roomRentType === 'percentage' ? '% dell\'incasso' : '€ fissi'}
+                                </div>
+                                <div id="teacherCostPreview">
+                                    • Maestro: ${monthlyCosts.teacherFee}${monthlyCosts.teacherFeeType === 'percentage' ? '% dell\'incasso' : '€ fissi'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" 
+                                    class="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200">
+                                Salva Costi
+                            </button>
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                Annulla
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Variabili di stato per i tipi
+            let currentRoomType = monthlyCosts.roomRentType;
+            let currentTeacherType = monthlyCosts.teacherFeeType;
+            
+            // Update preview in real-time
+            const roomRentInput = modal.querySelector('#roomRent');
+            const teacherFeeInput = modal.querySelector('#teacherFee');
+            
+            function updatePreview() {
+                const room = parseFloat(roomRentInput.value) || 0;
+                const teacher = parseFloat(teacherFeeInput.value) || 0;
+                
+                const roomPreview = modal.querySelector('#roomCostPreview');
+                const teacherPreview = modal.querySelector('#teacherCostPreview');
+                
+                roomPreview.textContent = `• Affitto: ${room}${currentRoomType === 'percentage' ? '% dell\'incasso' : '€ fissi'}`;
+                teacherPreview.textContent = `• Maestro: ${teacher}${currentTeacherType === 'percentage' ? '% dell\'incasso' : '€ fissi'}`;
+            }
+            
+            // Funzione globale per cambiare tipo di costo
+            window.setCostType = function(costType, valueType) {
+                if (costType === 'room') {
+                    currentRoomType = valueType;
+                    const euroBtn = modal.querySelector('#roomTypeEuro');
+                    const percentageBtn = modal.querySelector('#roomTypePercentage');
+                    const symbol = modal.querySelector('#roomSymbol');
+                    const input = modal.querySelector('#roomRent');
+                    
+                    if (valueType === 'euro') {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        symbol.textContent = '€';
+                        input.placeholder = 'Es: 300';
+                    } else {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        symbol.textContent = '%';
+                        input.placeholder = 'Es: 30';
+                    }
+                } else if (costType === 'teacher') {
+                    currentTeacherType = valueType;
+                    const euroBtn = modal.querySelector('#teacherTypeEuro');
+                    const percentageBtn = modal.querySelector('#teacherTypePercentage');
+                    const symbol = modal.querySelector('#teacherSymbol');
+                    const input = modal.querySelector('#teacherFee');
+                    
+                    if (valueType === 'euro') {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        symbol.textContent = '€';
+                        input.placeholder = 'Es: 400';
+                    } else {
+                        euroBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gray-200 text-gray-700 transition-colors text-sm font-medium';
+                        percentageBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-amber-600 text-white transition-colors text-sm font-medium';
+                        symbol.textContent = '%';
+                        input.placeholder = 'Es: 40';
+                    }
+                }
+                
+                updatePreview();
+            };
+            
+            roomRentInput.addEventListener('input', updatePreview);
+            teacherFeeInput.addEventListener('input', updatePreview);
+            
+            // Focus sul primo campo
+            setTimeout(() => {
+                roomRentInput.focus();
+                roomRentInput.select();
+            }, 100);
+            
+            // Gestione submit form
+            modal.querySelector('#costsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                monthlyCosts.roomRent = parseFloat(roomRentInput.value) || 0;
+                monthlyCosts.roomRentType = currentRoomType;
+                monthlyCosts.teacherFee = parseFloat(teacherFeeInput.value) || 0;
+                monthlyCosts.teacherFeeType = currentTeacherType;
+                
+                saveMonthlyCosts();
+                updateStats();
+                
+                // Aggiorna il pulsante con i nuovi valori
+                updateCostsButtonLabel();
+                
+                modal.remove();
+                showNotification('Costi mensili aggiornati!', 'success');
+            });
+            
+            // Chiudi modal cliccando fuori
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
 
         function showNewListPopup() {
             const modal = document.createElement('div');
@@ -414,6 +792,12 @@
             const subscriptionType = document.getElementById('subscriptionType').value;
             const startDate = document.getElementById('startDate').value;
             const price = parseFloat(document.getElementById('price').value);
+            const courseName = document.getElementById('courseName').value.trim() || 'Generico';
+            
+            // Aggiungi il corso alla memoria se è nuovo
+            if (courseName.toLowerCase() !== 'generico') {
+                addCourseToMemory(courseName);
+            }
             
             const subscription = {
                 id: Date.now(),
@@ -421,20 +805,37 @@
                 type: subscriptionType,
                 startDate: startDate,
                 price: price,
+                course: courseName,
                 lessonsUsed: 0,
                 createdAt: new Date().toISOString()
             };
 
-            // Calcola data di scadenza e lezioni totali
             const startDateObj = new Date(startDate + 'T00:00:00');
+            
             if (subscription.type === 'monthly') {
                 subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + 1, startDateObj.getDate()).toISOString().split('T')[0];
                 subscription.totalLessons = null;
-            } else if (subscription.type === 'bimonthly') {
-                subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + 2, startDateObj.getDate()).toISOString().split('T')[0];
-                subscription.totalLessons = 6;
+            } else if (subscription.type === 'package') {
+                const packageMonths = parseInt(document.getElementById('packageMonths').value);
+                const packageLessonsMode = document.getElementById('packageLessonsMode').value;
+                
+                // Calcola data scadenza
+                subscription.expiryDate = new Date(startDateObj.getFullYear(), startDateObj.getMonth() + packageMonths, startDateObj.getDate()).toISOString().split('T')[0];
+                
+                // Salva parametri pacchetto
+                subscription.packageMonths = packageMonths;
+                subscription.packageLessonsMode = packageLessonsMode;
+                
+                if (packageLessonsMode === 'full') {
+                    subscription.totalLessons = null; // Illimitato
+                } else if (packageLessonsMode === 'limited') {
+                    subscription.totalLessons = parseInt(document.getElementById('packageLessons').value);
+                } else if (packageLessonsMode === 'monthly') {
+                    subscription.totalLessons = parseInt(document.getElementById('packageMonthlyLessons').value);
+                    subscription.monthlyRenewal = parseInt(document.getElementById('packageMonthlyLessons').value);
+                }
             } else if (subscription.type === 'single') {
-                subscription.expiryDate = startDate; // Scade lo stesso giorno
+                subscription.expiryDate = startDate;
                 subscription.totalLessons = 1;
             }
 
@@ -453,11 +854,42 @@
             // Reset form e chiudi
             e.target.reset();
             document.getElementById('startDate').valueAsDate = new Date();
+            document.getElementById('packageFields').classList.add('hidden');
             toggleNewSubscriptionForm(); // Chiude il form
             
             // Mostra messaggio di successo
             showNotification('Abbonamento aggiunto con successo!', 'success');
         });
+
+        function updateSubscriptionFormFields() {
+            const type = document.getElementById('subscriptionType').value;
+            const packageFields = document.getElementById('packageFields');
+            
+            if (type === 'package') {
+                packageFields.classList.remove('hidden');
+                document.getElementById('priceContainer').classList.add('md:col-span-1');
+            } else {
+                packageFields.classList.add('hidden');
+                document.getElementById('priceContainer').classList.remove('md:col-span-1');
+            }
+        }
+
+        function updatePackageLessonsField() {
+            const mode = document.getElementById('packageLessonsMode').value;
+            const limitedContainer = document.getElementById('packageLessonsContainer');
+            const monthlyContainer = document.getElementById('packageMonthlyLessonsContainer');
+            
+            if (mode === 'limited') {
+                limitedContainer.classList.remove('hidden');
+                monthlyContainer.classList.add('hidden');
+            } else if (mode === 'monthly') {
+                limitedContainer.classList.add('hidden');
+                monthlyContainer.classList.remove('hidden');
+            } else {
+                limitedContainer.classList.add('hidden');
+                monthlyContainer.classList.add('hidden');
+            }
+        }
 
         function saveSubscriptions() {
             try {
@@ -515,7 +947,6 @@
                 
                 document.getElementById('subscriptionsList').classList.remove('hidden');
                 document.getElementById('studentsList').classList.add('hidden');
-                document.getElementById('filtersSection').classList.remove('hidden');
                 
                 renderSubscriptions();
             } else if (view === 'students') {
@@ -524,7 +955,6 @@
                 
                 document.getElementById('subscriptionsList').classList.add('hidden');
                 document.getElementById('studentsList').classList.remove('hidden');
-                document.getElementById('filtersSection').classList.add('hidden');
                 
                 renderStudents();
             }
@@ -555,10 +985,18 @@
 
             emptyMessage.style.display = 'none';
             
+            // Applica filtro corso
+            let filteredSubscriptions = subscriptions;
+            if (currentCourseFilter !== 'all') {
+                filteredSubscriptions = subscriptions.filter(sub => 
+                    (sub.course || 'Generico') === currentCourseFilter
+                );
+            }
+            
             // Raggruppa abbonamenti per allievo
             const studentData = {};
             
-            subscriptions.forEach(sub => {
+            filteredSubscriptions.forEach(sub => {
                 if (!studentData[sub.studentName]) {
                     studentData[sub.studentName] = [];
                 }
@@ -567,6 +1005,11 @@
 
             // Ordina allievi alfabeticamente
             const sortedStudents = Object.keys(studentData).sort();
+            
+            if (sortedStudents.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 bg-white rounded-xl shadow-lg"><h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun allievo trovato</h3><p class="text-gray-500">Prova a cambiare i filtri</p></div>';
+                return;
+            }
             
             container.innerHTML = sortedStudents.map(studentName => {
                 const studentSubscriptions = studentData[studentName];
@@ -611,18 +1054,25 @@
                     let typeText = '';
                     if (currentSubscription.type === 'monthly') {
                         typeText = 'Mensile';
-                    } else if (currentSubscription.type === 'bimonthly') {
-                        typeText = 'Bimestrale (6 lezioni)';
-                        const progress = (currentSubscription.lessonsUsed / currentSubscription.totalLessons) * 100;
-                        progressBar = `
-                            <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
-                                <span>Lezioni: ${currentSubscription.lessonsUsed}/${currentSubscription.totalLessons}</span>
-                                <span>${currentSubscription.totalLessons - currentSubscription.lessonsUsed} rimanenti</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
-                                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
-                            </div>
-                        `;
+                    } else if (currentSubscription.type === 'package') {
+                        const mode = currentSubscription.packageLessonsMode;
+                        if (mode === 'full') {
+                            typeText = `Pacchetto ${currentSubscription.packageMonths}m (Illimitato)`;
+                        } else if (mode === 'limited') {
+                            typeText = `Pacchetto ${currentSubscription.packageMonths}m (${currentSubscription.totalLessons} lez.)`;
+                            const progress = (currentSubscription.lessonsUsed / currentSubscription.totalLessons) * 100;
+                            progressBar = `
+                                <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                    <span>Lezioni: ${currentSubscription.lessonsUsed}/${currentSubscription.totalLessons}</span>
+                                    <span>${currentSubscription.totalLessons - currentSubscription.lessonsUsed} rimanenti</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                    <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                                </div>
+                            `;
+                        } else if (mode === 'monthly') {
+                            typeText = `Pacchetto ${currentSubscription.packageMonths}m (${currentSubscription.totalLessons}/mese)`;
+                        }
                     } else if (currentSubscription.type === 'single') {
                         typeText = 'Lezione Singola';
                         const progress = (currentSubscription.lessonsUsed / currentSubscription.totalLessons) * 100;
@@ -647,7 +1097,7 @@
                                     <span class="font-medium">Prezzo:</span> €${currentSubscription.price.toFixed(2)}
                                 </div>
                                 <div>
-                                    <span class="font-medium">Inizio:</span> ${startDate}
+                                    <span class="font-medium">Corso:</span> <span class="text-purple-600">${currentSubscription.course || 'Generico'}</span>
                                 </div>
                                 <div>
                                     <span class="font-medium">Scadenza:</span> ${expiryDate}
@@ -686,7 +1136,7 @@
                         
                         ${subscriptionDetails}
                         
-                        ${currentSubscription && currentSubscription.totalLessons ? `
+                        ${currentSubscription && currentSubscription.totalLessons && currentSubscription.packageLessonsMode !== 'monthly' ? `
                             <div class="flex gap-2">
                                 <button onclick="addLesson(${currentSubscription.id})" 
                                         class="flex-1 ${currentSubscription.type === 'single' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-purple-600 hover:bg-purple-700'} text-white px-4 py-2 rounded-lg transition-colors ${currentSubscription.lessonsUsed >= currentSubscription.totalLessons ? 'opacity-50 cursor-not-allowed' : ''}">
@@ -708,21 +1158,30 @@
             const emptyMessage = document.getElementById('emptyMessage');
             
             let filteredSubscriptions = subscriptions;
+            
+            // Applica filtro per stato
             if (currentFilter !== 'all') {
                 if (currentFilter === 'monthly-active') {
-                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active');
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active');
                 } else if (currentFilter === 'bimonthly-active') {
-                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active');
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => sub.type === 'package' && getSubscriptionStatus(sub) === 'active');
                 } else if (currentFilter === 'single-active') {
-                    filteredSubscriptions = subscriptions.filter(sub => sub.type === 'single');
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => sub.type === 'single');
                 } else {
-                    filteredSubscriptions = subscriptions.filter(sub => getSubscriptionStatus(sub) === currentFilter);
+                    filteredSubscriptions = filteredSubscriptions.filter(sub => getSubscriptionStatus(sub) === currentFilter);
                 }
+            }
+            
+            // Applica filtro per corso
+            if (currentCourseFilter !== 'all') {
+                filteredSubscriptions = filteredSubscriptions.filter(sub => 
+                    (sub.course || 'Generico') === currentCourseFilter
+                );
             }
 
             if (filteredSubscriptions.length === 0) {
-                container.innerHTML = '';
-                emptyMessage.style.display = 'block';
+                container.innerHTML = '<div class="text-center py-12 bg-white rounded-xl shadow-lg"><h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun abbonamento trovato</h3><p class="text-gray-500">Prova a cambiare i filtri</p></div>';
+                emptyMessage.style.display = 'none';
                 return;
             }
 
@@ -746,18 +1205,30 @@
                 
                 if (subscription.type === 'monthly') {
                     typeText = 'Abbonamento Mensile';
-                } else if (subscription.type === 'bimonthly') {
-                    typeText = 'Abbonamento Bimestrale (6 lezioni)';
-                    const progress = (subscription.lessonsUsed / subscription.totalLessons) * 100;
-                    lessonInfo = `
-                        <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
-                            <span>Lezioni: ${subscription.lessonsUsed}/${subscription.totalLessons}</span>
-                            <span>${subscription.totalLessons - subscription.lessonsUsed} rimanenti</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
-                            <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
-                        </div>
-                    `;
+                } else if (subscription.type === 'package') {
+                    const mode = subscription.packageLessonsMode;
+                    if (mode === 'full') {
+                        typeText = `Pacchetto ${subscription.packageMonths} Mesi (Illimitato)`;
+                    } else if (mode === 'limited') {
+                        typeText = `Pacchetto ${subscription.packageMonths} Mesi (${subscription.totalLessons} lezioni)`;
+                        const progress = (subscription.lessonsUsed / subscription.totalLessons) * 100;
+                        lessonInfo = `
+                            <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                <span>Lezioni: ${subscription.lessonsUsed}/${subscription.totalLessons}</span>
+                                <span>${subscription.totalLessons - subscription.lessonsUsed} rimanenti</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                            </div>
+                        `;
+                    } else if (mode === 'monthly') {
+                        typeText = `Pacchetto ${subscription.packageMonths} Mesi (${subscription.totalLessons}/mese ricorrente)`;
+                        lessonInfo = `
+                            <div class="text-sm text-gray-600 mb-3 p-3 bg-blue-50 rounded-lg">
+                                <span class="font-medium">📅 Rinnovo mensile:</span> ${subscription.totalLessons} lezioni ogni mese
+                            </div>
+                        `;
+                    }
                 } else if (subscription.type === 'single') {
                     typeText = 'Lezione Singola';
                     const progress = (subscription.lessonsUsed / subscription.totalLessons) * 100;
@@ -778,6 +1249,7 @@
                             <div>
                                 <h3 class="text-xl font-semibold text-gray-800">${subscription.studentName}</h3>
                                 <p class="text-gray-600">${typeText}</p>
+                                <p class="text-sm text-purple-600 font-medium mt-1">📚 ${subscription.course || 'Generico'}</p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="${statusClass} text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -807,7 +1279,7 @@
                                 <span class="text-gray-500">Prezzo:</span>
                                 <div class="font-medium">€${subscription.price.toFixed(2)}</div>
                             </div>
-                            ${subscription.totalLessons ? `
+                            ${subscription.totalLessons && subscription.packageLessonsMode !== 'monthly' ? `
                                 <div class="col-span-2 sm:col-span-1">
                                     <button onclick="addLesson(${subscription.id})" 
                                             class="w-full ${subscription.type === 'single' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-purple-600 hover:bg-purple-700'} text-white px-3 py-2 rounded-lg text-xs transition-colors ${subscription.lessonsUsed >= subscription.totalLessons ? 'opacity-50 cursor-not-allowed' : ''}">
@@ -879,7 +1351,10 @@
                 return `
                     <div class="border-l-4 ${status === 'active' ? 'border-green-500' : status === 'expiring' ? 'border-yellow-500' : 'border-red-500'} pl-4 py-3 mb-4 bg-gray-50 rounded-r-lg">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="font-medium text-gray-800">${typeText}${lessonInfo}</span>
+                            <div>
+                                <span class="font-medium text-gray-800">${typeText}${lessonInfo}</span>
+                                <span class="text-xs text-purple-600 ml-2">📚 ${sub.course || 'Generico'}</span>
+                            </div>
                             <span class="${statusClass} text-white px-2 py-1 rounded text-xs font-medium">
                                 ${statusText}
                             </span>
@@ -1094,9 +1569,9 @@
                     if (sub.type === 'monthly') {
                         return sum + sub.price;
                     }
-                    // Abbonamenti bimestrali: metà prezzo al mese corrente
-                    else if (sub.type === 'bimonthly') {
-                        return sum + (sub.price / 2);
+                    // Pacchetti: prezzo diviso per numero di mesi
+                    else if (sub.type === 'package') {
+                        return sum + (sub.price / sub.packageMonths);
                     }
                     // Lezioni singole: prezzo completo
                     else if (sub.type === 'single') {
@@ -1107,11 +1582,11 @@
 
             // Calcola statistiche per tipo
             const monthlySubscriptions = subscriptions.filter(sub => sub.type === 'monthly');
-            const bimonthlySubscriptions = subscriptions.filter(sub => sub.type === 'bimonthly');
+            const packageSubscriptions = subscriptions.filter(sub => sub.type === 'package');
             const singleSubscriptions = subscriptions.filter(sub => sub.type === 'single');
             
             const monthlyTotal = monthlySubscriptions.reduce((sum, sub) => sum + sub.price, 0);
-            const bimonthlyTotal = bimonthlySubscriptions.reduce((sum, sub) => sum + sub.price, 0);
+            const packageTotal = packageSubscriptions.reduce((sum, sub) => sum + sub.price, 0);
             const singleTotal = singleSubscriptions.reduce((sum, sub) => sum + sub.price, 0);
             const averageRevenue = subscriptions.length > 0 ? totalRevenue / subscriptions.length : 0;
 
@@ -1124,8 +1599,8 @@
             // Aggiorna dettagli ricavi
             document.getElementById('monthlyTotal').textContent = `€${monthlyTotal.toFixed(2)}`;
             document.getElementById('monthlyCount').textContent = `${monthlySubscriptions.length} abbonamenti`;
-            document.getElementById('bimonthlyTotal').textContent = `€${bimonthlyTotal.toFixed(2)}`;
-            document.getElementById('bimonthlyCount').textContent = `${bimonthlySubscriptions.length} abbonamenti`;
+            document.getElementById('bimonthlyTotal').textContent = `€${packageTotal.toFixed(2)}`;
+            document.getElementById('bimonthlyCount').textContent = `${packageSubscriptions.length} pacchetti`;
             document.getElementById('singleTotal').textContent = `€${singleTotal.toFixed(2)}`;
             document.getElementById('singleCount').textContent = `${singleSubscriptions.length} lezioni`;
             document.getElementById('averageRevenue').textContent = `€${averageRevenue.toFixed(2)}`;
@@ -1134,14 +1609,14 @@
             const activeLessonSubscriptions = subscriptions.filter(sub => 
                 sub.totalLessons && getSubscriptionStatus(sub) !== 'expired'
             );
-            const activeBimonthlyCount = subscriptions.filter(sub => 
-                sub.type === 'bimonthly' && getSubscriptionStatus(sub) !== 'expired'
+            const activePackageCount = subscriptions.filter(sub => 
+                sub.type === 'package' && getSubscriptionStatus(sub) !== 'expired'
             ).length;
             const averageLessonsPerStudent = activeLessonSubscriptions.length > 0 ? 
                 totalLessons / activeLessonSubscriptions.length : 0;
 
             // Aggiorna dettagli lezioni
-            document.getElementById('activeBimonthlyCount').textContent = activeBimonthlyCount;
+            document.getElementById('activeBimonthlyCount').textContent = activePackageCount;
             document.getElementById('totalRemainingLessons').textContent = totalLessons;
             document.getElementById('averageLessonsPerStudent').textContent = averageLessonsPerStudent.toFixed(1);
 
@@ -1151,12 +1626,15 @@
             document.getElementById('count-expiring').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'expiring').length;
             document.getElementById('count-expired').textContent = subscriptions.filter(sub => getSubscriptionStatus(sub) === 'expired').length;
             document.getElementById('count-monthly-active').textContent = subscriptions.filter(sub => sub.type === 'monthly' && getSubscriptionStatus(sub) === 'active').length;
-            document.getElementById('count-bimonthly-active').textContent = subscriptions.filter(sub => sub.type === 'bimonthly' && getSubscriptionStatus(sub) === 'active').length;
+            document.getElementById('count-bimonthly-active').textContent = subscriptions.filter(sub => sub.type === 'package' && getSubscriptionStatus(sub) === 'active').length;
             document.getElementById('count-single-active').textContent = subscriptions.filter(sub => sub.type === 'single').length;
 
             // Aggiorna breakdown mensile e lezioni
             updateMonthlyBreakdown();
             updateStudentLessonsBreakdown();
+            
+            // Aggiorna il filtro corsi
+            updateCourseFilter();
         }
 
         function updateMonthlyBreakdown() {
@@ -1180,40 +1658,26 @@
                     
                     monthlyData[monthKey].revenue += sub.price;
                     monthlyData[monthKey].count += 1;
-                } else if (sub.type === 'bimonthly') {
-                    // Abbonamenti bimestrali: metà al primo mese, metà al secondo
-                    const firstMonth = date;
-                    const secondMonth = new Date(date.getFullYear(), date.getMonth() + 1, date.getDate());
+                } else if (sub.type === 'package') {
+                    // Pacchetti: distribui il prezzo su tutti i mesi della durata
+                    const pricePerMonth = sub.price / sub.packageMonths;
                     
-                    // Primo mese
-                    const firstMonthKey = `${firstMonth.getFullYear()}-${String(firstMonth.getMonth() + 1).padStart(2, '0')}`;
-                    const firstMonthName = firstMonth.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
-                    
-                    if (!monthlyData[firstMonthKey]) {
-                        monthlyData[firstMonthKey] = {
-                            name: firstMonthName,
-                            revenue: 0,
-                            count: 0
-                        };
+                    for (let i = 0; i < sub.packageMonths; i++) {
+                        const monthDate = new Date(date.getFullYear(), date.getMonth() + i, date.getDate());
+                        const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+                        const monthName = monthDate.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+                        
+                        if (!monthlyData[monthKey]) {
+                            monthlyData[monthKey] = {
+                                name: monthName,
+                                revenue: 0,
+                                count: 0
+                            };
+                        }
+                        
+                        monthlyData[monthKey].revenue += pricePerMonth;
+                        monthlyData[monthKey].count += (1 / sub.packageMonths);
                     }
-                    
-                    monthlyData[firstMonthKey].revenue += sub.price / 2;
-                    monthlyData[firstMonthKey].count += 0.5;
-                    
-                    // Secondo mese
-                    const secondMonthKey = `${secondMonth.getFullYear()}-${String(secondMonth.getMonth() + 1).padStart(2, '0')}`;
-                    const secondMonthName = secondMonth.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
-                    
-                    if (!monthlyData[secondMonthKey]) {
-                        monthlyData[secondMonthKey] = {
-                            name: secondMonthName,
-                            revenue: 0,
-                            count: 0
-                        };
-                    }
-                    
-                    monthlyData[secondMonthKey].revenue += sub.price / 2;
-                    monthlyData[secondMonthKey].count += 0.5;
                 } else if (sub.type === 'single') {
                     // Lezioni singole: tutto al mese di inizio
                     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -1242,16 +1706,75 @@
 
             breakdownContainer.innerHTML = sortedMonths.map(monthKey => {
                 const data = monthlyData[monthKey];
+                const grossRevenue = data.revenue;
+                
+                // Calcola i costi in base al tipo (euro o percentuale)
+                let roomCost = 0;
+                let teacherCost = 0;
+                
+                if (monthlyCosts.roomRentType === 'euro') {
+                    roomCost = monthlyCosts.roomRent;
+                } else {
+                    roomCost = (grossRevenue * monthlyCosts.roomRent) / 100;
+                }
+                
+                if (monthlyCosts.teacherFeeType === 'euro') {
+                    teacherCost = monthlyCosts.teacherFee;
+                } else {
+                    teacherCost = (grossRevenue * monthlyCosts.teacherFee) / 100;
+                }
+                
+                const totalCosts = roomCost + teacherCost;
+                const netRevenue = grossRevenue - totalCosts;
+                const profitMargin = grossRevenue > 0 ? ((netRevenue / grossRevenue) * 100) : 0;
+                
                 const countText = data.count % 1 === 0 ? 
                     `${data.count} abbonamenti` : 
-                    `${data.count} abbonamenti (inclusi bimestrali)`;
+                    `${data.count} abbonamenti (inclusi pacchetti)`;
+                
+                const netClass = netRevenue >= 0 ? 'text-green-600' : 'text-red-600';
+                const profitClass = profitMargin >= 0 ? 'text-green-600' : 'text-red-600';
+                
+                // Formatta la visualizzazione dei costi
+                const roomCostDisplay = monthlyCosts.roomRentType === 'euro' ? 
+                    `€${roomCost.toFixed(2)}` : 
+                    `€${roomCost.toFixed(2)} (${monthlyCosts.roomRent}%)`;
+                    
+                const teacherCostDisplay = monthlyCosts.teacherFeeType === 'euro' ? 
+                    `€${teacherCost.toFixed(2)}` : 
+                    `€${teacherCost.toFixed(2)} (${monthlyCosts.teacherFee}%)`;
+                
                 return `
-                    <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                        <div>
-                            <span class="font-medium text-gray-700">${data.name}</span>
-                            <span class="text-sm text-gray-500 ml-2">(${countText})</span>
+                    <div class="py-3 border-b border-gray-200 last:border-b-0">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <span class="font-semibold text-gray-800">${data.name}</span>
+                                <span class="text-sm text-gray-500 ml-2">(${countText})</span>
+                            </div>
                         </div>
-                        <span class="font-semibold text-gray-800">€${data.revenue.toFixed(2)}</span>
+                        <div class="grid grid-cols-2 gap-3 text-sm pl-4">
+                            <div>
+                                <span class="text-gray-600">Ricavi Lordi:</span>
+                                <span class="font-semibold text-blue-600 ml-2">€${grossRevenue.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Costi Totali:</span>
+                                <span class="font-semibold text-red-600 ml-2">-€${totalCosts.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">• Affitto Sala:</span>
+                                <span class="text-gray-700 ml-2">${roomCostDisplay}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">• Maestro:</span>
+                                <span class="text-gray-700 ml-2">${teacherCostDisplay}</span>
+                            </div>
+                            <div class="col-span-2 pt-2 border-t border-gray-200">
+                                <span class="text-gray-600 font-medium">Ricavo Netto:</span>
+                                <span class="font-bold ${netClass} ml-2 text-lg">€${netRevenue.toFixed(2)}</span>
+                                <span class="text-xs ${profitClass} ml-2">(${profitMargin >= 0 ? '+' : ''}${profitMargin.toFixed(1)}%)</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1284,7 +1807,7 @@
                                   status === 'expiring' ? 'text-yellow-600' : 'text-red-600';
                 const expiryDate = new Date(sub.expiryDate + 'T00:00:00').toLocaleDateString('it-IT');
                 const progressColor = sub.type === 'single' ? 'bg-orange-600' : 'bg-purple-600';
-                const typeText = sub.type === 'single' ? 'Singola' : 'Bimestrale';
+                const typeText = sub.type === 'single' ? 'Singola' : 'Pacchetto';
                 
                 return `
                     <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
@@ -1358,7 +1881,8 @@
                 'Lezioni Usate',
                 'Lezioni Totali',
                 'Stato',
-                'Data Creazione'
+                'Data Creazione',
+                'Corso'
             ];
 
             const csvData = subscriptions.map(sub => {
@@ -1381,7 +1905,8 @@
                     sub.lessonsUsed || 0,
                     sub.totalLessons || 'N/A',
                     statusText,
-                    new Date(sub.createdAt).toLocaleDateString('it-IT')
+                    new Date(sub.createdAt).toLocaleDateString('it-IT'),
+                    sub.course || 'Generico'
                 ];
             });
 
@@ -1451,7 +1976,8 @@
                 'Lezioni Usate',
                 'Lezioni Totali',
                 'Stato',
-                'Data Creazione'
+                'Data Creazione',
+                'Corso'
             ];
 
             const sheetData = subscriptions.map(sub => {
@@ -1474,7 +2000,8 @@
                     sub.lessonsUsed || 0,
                     sub.totalLessons || 'N/A',
                     statusText,
-                    new Date(sub.createdAt).toLocaleDateString('it-IT')
+                    new Date(sub.createdAt).toLocaleDateString('it-IT'),
+                    sub.course || 'Generico'
                 ];
             });
 
@@ -1532,7 +2059,7 @@
                     dataLines.forEach(line => {
                         const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
                         
-                        if (fields.length >= 6) {
+                        if (fields.length >= 7) {
                             const studentName = fields[0];
                             const typeText = fields[1];
                             const type = typeText === 'Mensile' ? 'monthly' : 
@@ -1542,6 +2069,13 @@
                             const price = parseFloat(fields[4]);
                             const lessonsUsed = parseInt(fields[5]) || 0;
                             const totalLessons = fields[6] === 'N/A' ? null : parseInt(fields[6]);
+                            // Il campo Corso è ora all'ultima posizione (indice 9)
+                            const course = fields[9] ? fields[9] : 'Generico';
+
+                            // Aggiungi il corso alla memoria se è nuovo
+                            if (course && course.toLowerCase() !== 'generico') {
+                                addCourseToMemory(course);
+                            }
 
                             // Controlla se l'abbonamento esiste già
                             const exists = subscriptions.some(sub => 
@@ -1555,6 +2089,7 @@
                                     id: Date.now() + Math.random(),
                                     studentName: studentName,
                                     type: type,
+                                    course: course,
                                     startDate: startDate,
                                     expiryDate: expiryDate,
                                     price: price,
@@ -1667,8 +2202,9 @@
 
         // Inizializza l'app
         checkStorageStatus();
+        updateCourseList(); // Carica i corsi salvati nel datalist
         setView('subscriptions'); // Inizia con la vista abbonamenti
         updateStats();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c5eba41622ee6e',t:'MTc2Mjc4MTU5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0db1cb4f06eee74',t:'MTc4MTc5NDI4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
